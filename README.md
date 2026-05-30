@@ -45,20 +45,6 @@ Per avviare la versione compilata:
 java -cp build/classes Main
 ```
 
-## JavaDoc HTML
-
-La documentazione HTML generata con JavaDoc deve stare separata dal codice sorgente:
-
-```bash
-javadoc -private -encoding UTF-8 -charset UTF-8 -docencoding UTF-8 -d docs/javadoc src/anagrafe/*.java
-```
-
-Il file principale da aprire è:
-
-```text
-docs/javadoc/index.html
-```
-
 ## Come funziona
 
 All'avvio `Main` crea il menu principale. `Menu` coordina tutti i servizi: legge gli input da console, chiama il servizio comuni per risolvere il comune corretto, usa il servizio codice fiscale per generare o verificare il codice, salva i cittadini nell'archivio CSV e permette esportazioni o statistiche.
