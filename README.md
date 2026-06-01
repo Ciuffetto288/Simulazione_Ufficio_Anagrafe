@@ -36,7 +36,7 @@ Per eseguire i controlli automatici interni:
 Per compilare senza mischiare i file `.class` con i sorgenti:
 
 ```bash
-javac -d build/classes src/anagrafe/*.java
+javac -d build/classes src/*.java
 ```
 
 Per avviare la versione compilata:
