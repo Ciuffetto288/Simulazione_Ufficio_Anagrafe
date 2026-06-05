@@ -35,7 +35,7 @@ public final class AsciiArt {
     public static void showSplash(ConsoleUtils console, boolean fast) {
         console.clearScreen();
         System.out.println(AnsiColor.paint(AsciiArtAnagrafe, AnsiColor.GREEN));
-        System.out.println("Autore: Anthony Romito");
+        System.out.println("Autore: Ciuffetto288");
         System.out.println("Versione: 5.3.1");
         System.out.println("Sistema gestione anagrafe");
         try {
