@@ -1,10 +1,3 @@
-/*
-PROJECT: SIMULAZIONE CALCOLO CODICE FISCALE
-AUTORE: ANTHONY ROMITO
-CLASSE: 3AI
-DATA ULTIMA MODIFICA: 28/05/2026
-DESCRIZIONE FILE: Classe Utility per la formattazione e colorazione del testo.
-*/
 
 /**
  * Classe Utility per la formattazione e colorazione del testo tramite codici ANSI.
