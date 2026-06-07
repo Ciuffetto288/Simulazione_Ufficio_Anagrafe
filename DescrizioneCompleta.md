@@ -28,7 +28,7 @@ Questo documento descrive in modo dettagliato la struttura del progetto ANAGR@FE
 
 13. `Menu.java`: coordina l'interfaccia interattiva. Mostra il menu, richiama i servizi, gestisce creazione, calcolo codice fiscale, archivio, ricerca, verifica, modifica, eliminazione, esportazione e statistiche. È il punto in cui l'utente inserisce i dati e vede i risultati.
 
-14. `SelfTest.java`: contiene controlli automatici rapidi. Verifica la generazione del codice fiscale di esempio, la produzione di una variante omocodica, la validazione dei codici e la ricerca flessibile dei comuni con provincia scritta nello stesso campo, compresi i casi `Rovigo (RO)` e `Monselice PD`.
+14. `SelfTest.java`: contiene controlli automatici rapidi. Verifica la generazione del codice fiscale di esempio, la produzione di una variante omocodica, la validazione dei codici e la ricerca flessibile dei comuni con provincia scritta nello stesso campo, compresi i casi `Roma (RM)` e `Roma RM`.
 
 15. `StatisticheService.java`: genera un report testuale sull'archivio cittadini. Calcola totale record, numero di uomini, numero di donne, età media e classifica dei comuni più presenti. Se l'archivio è vuoto produce comunque un messaggio leggibile.
 
