@@ -49,7 +49,7 @@ java -cp build/classes Main
 
 All'avvio `Main` crea il menu principale. `Menu` coordina tutti i servizi: legge gli input da console, chiama il servizio comuni per risolvere il comune corretto, usa il servizio codice fiscale per generare o verificare il codice, salva i cittadini nell'archivio CSV e permette esportazioni o statistiche.
 
-Il programma carica i comuni da `data/comuni.xlsx`; se il file non è leggibile prova `data/comuni.csv`; se anche quello non è disponibile usa un elenco interno minimo. La ricerca comuni accetta sia campi separati sia input naturali come `Roma (RM)` o `Roma RO`.
+Il programma carica i comuni da `data/comuni.xlsx`; se il file non è leggibile prova `data/comuni.csv`; se anche quello non è disponibile usa un elenco interno minimo. La ricerca comuni accetta sia campi separati sia input naturali come `Roma (RM)` o `Roma RM`.
 
 L'archivio interno conserva il codice catastale perché serve al calcolo del codice fiscale. Nelle visualizzazioni e nelle esportazioni per l'utente, però, vengono mostrati comune e provincia, non il codice catastale.
 
