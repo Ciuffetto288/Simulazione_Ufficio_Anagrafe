@@ -16,7 +16,7 @@ Questo documento descrive in modo dettagliato la struttura del progetto ANAGR@FE
 
 7. `Comune.java`: rappresenta un comune italiano con nome, sigla provincia e codice catastale. È immutabile: i campi vengono assegnati nel costruttore e non cambiano. Il metodo `toString` restituisce solo `Nome (Provincia)` per non mostrare codici catastali negli elenchi rivolti all'utente.
 
-8. `ComuneService.java`: carica e interroga l'archivio dei comuni. Prova prima `comuni.xlsx`, poi `comuni.csv`, poi un elenco interno minimo. Legge il file Excel come archivio ZIP e parser XML. La ricerca è flessibile: riconosce input come `Rovigo (RO)`, `Rovigo RO`, `Rovigo - RO` e `Monselice PD`, separando automaticamente nome e provincia.
+8. `ComuneService.java`: carica e interroga l'archivio dei comuni. Prova prima `comuni.xlsx`, poi `comuni.csv`, poi un elenco interno minimo. Legge il file Excel come archivio ZIP e parser XML. La ricerca è flessibile: riconosce input come `Roma (RM)`, `Roma RM` e `Roma - RM`, separando automaticamente nome e provincia.
 
 9. `ConsoleUtils.java`: raccoglie le operazioni ripetitive di input da console. Legge stringhe obbligatorie o opzionali, interi entro un intervallo, date nel formato italiano, sesso `M/F` e conferme `S/N`. Gestisce anche la pulizia dello schermo e la pausa con INVIO.
 
