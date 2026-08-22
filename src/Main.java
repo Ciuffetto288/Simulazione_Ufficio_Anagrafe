@@ -24,8 +24,12 @@ public final class Main {
         }
 
         boolean fastSplash = Arrays.asList(args).contains("--fast");
+        EcosistemaBridge bridge = new EcosistemaBridge();
+        bridge.start();
         try (Scanner scanner = new Scanner(System.in)) {
-            new Menu(scanner).start(fastSplash);
+            new Menu(scanner, bridge).start(fastSplash);
+        } finally {
+            bridge.stop();
         }
     }
 }

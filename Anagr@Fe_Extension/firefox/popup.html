@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anagr@Fe</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">A</div>
+      <div><p class="eyebrow">Ufficio anagrafe</p><h1>Anagr@Fe</h1></div>
+      <span id="connection-dot" class="connection-dot offline" title="Stato server"></span>
+    </header>
+    <section class="status-panel">
+      <div><span class="panel-label">Server locale</span><strong id="server-status">Controllo in corso...</strong></div>
+      <button id="refresh-button" class="icon-button" type="button" title="Controlla il server" aria-label="Controlla il server">&#8635;</button>
+    </section>
+    <section class="search-section">
+      <div class="section-heading"><div><span class="panel-label">Archivio cittadini</span><h2>Trova una persona</h2></div><span class="shortcut">Invio</span></div>
+      <form id="search-form" class="search-form">
+        <label class="sr-only" for="search-input">Nome, cognome o codice fiscale</label>
+        <input id="search-input" type="search" placeholder="Nome, cognome o codice fiscale" autocomplete="off">
+        <button class="primary-button" type="submit">Cerca</button>
+      </form>
+      <p id="search-message" class="message" role="status">Inserisci almeno due caratteri.</p>
+      <div id="results" class="results" aria-live="polite"></div>
+    </section>
+    <footer class="footer">
+      <label for="api-url">Indirizzo API</label>
+      <input id="api-url" type="url" value="http://localhost:8080" spellcheck="false">
+      <button id="save-button" class="text-button" type="button">Salva</button>
+    </footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

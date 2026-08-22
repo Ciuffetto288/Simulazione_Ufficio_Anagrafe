@@ -1,0 +1,9 @@
+{
+  "name": "anagrafe.server",
+  "description": "Anagr@Fe local integration host",
+  "path": "/ABSOLUTE/PATH/TO/anagrafe-server",
+  "type": "stdio",
+  "allowed_extensions": [
+    "anagrafe@example.local"
+  ]
+}

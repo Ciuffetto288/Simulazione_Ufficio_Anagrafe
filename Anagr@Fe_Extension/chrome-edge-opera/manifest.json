@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Anagr@Fe",
+  "version": "1.0.0",
+  "description": "Connessione dell'ufficio anagrafe al server locale.",
+  "permissions": ["activeTab", "storage", "nativeMessaging"],
+  "host_permissions": ["http://localhost:8080/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Apri Anagr@Fe"
+  },
+  "icons": {
+    "16": "icons/icon.svg",
+    "48": "icons/icon.svg",
+    "128": "icons/icon.svg"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

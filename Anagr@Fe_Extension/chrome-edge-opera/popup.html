@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anagr@Fe</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app-shell">
+
+    <header class="topbar">
+      <div class="stamp" aria-hidden="true">
+        <span>A</span>
+        <span id="connection-dot" class="connection-dot offline" aria-hidden="true"></span>
+      </div>
+      <div class="brand-copy">
+        <p class="eyebrow">Ufficio anagrafe</p>
+        <h1>Anagr@Fe</h1>
+        <p class="tagline">Cerca un cittadino, verifica o calcola il codice fiscale.</p>
+      </div>
+    </header>
+
+    <section class="search-section">
+      <form id="search-form" class="search-form">
+        <label class="sr-only" for="search-input">Nome, cognome o codice fiscale</label>
+        <input id="search-input" type="search" placeholder="Nome, cognome o codice fiscale" autocomplete="off">
+        <button class="primary-button" type="submit">Cerca</button>
+      </form>
+      <p id="search-message" class="message" role="status">Inserisci almeno due caratteri.</p>
+
+      <div id="results" class="results" aria-live="polite">
+        <!-- Esempio di scheda risultato (da generare via JS) -->
+        <article class="citizen-card">
+          <div class="citizen-info">
+            <p class="citizen-name">Mario Rossi</p>
+            <p class="citizen-meta">Nato il 01/01/1980 &middot; Roma (RM)</p>
+          </div>
+          <div class="cf-row">
+            <code class="cf-chip">RSSMRA80A01H501U</code>
+            <button class="copy-button" type="button" title="Copia codice fiscale" aria-label="Copia codice fiscale">
+              <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+                <path d="M7 2.5A1.5 1.5 0 0 0 5.5 4v9A1.5 1.5 0 0 0 7 14.5h6A1.5 1.5 0 0 0 14.5 13V6.62a1.5 1.5 0 0 0-.44-1.06l-3.12-3.12A1.5 1.5 0 0 0 9.88 2H7Zm0 1.5h2.5v2A1.5 1.5 0 0 0 11 7.5h2V13a.5.5 0 0 1-.5.5H7a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5Z"/>
+                <path d="M3.5 6A1.5 1.5 0 0 0 2 7.5v9A1.5 1.5 0 0 0 3.5 18h6a1.5 1.5 0 0 0 1.5-1.5v-1h-1.5v1h-6v-9h1V6h-1Z"/>
+              </svg>
+            </button>
+          </div>
+        </article>
+
+        <!-- Stato vuoto: nessun cittadino trovato -->
+        <div class="empty-state" hidden>
+          <p class="empty-title">Nessun cittadino trovato in archivio</p>
+          <p class="empty-hint">Puoi calcolarlo comunque, senza salvarlo.</p>
+          <button id="calc-now-button" class="ghost-button" type="button">Calcola subito il CF</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

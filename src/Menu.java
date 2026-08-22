@@ -25,6 +25,8 @@ public final class Menu {
      */
     private final Scanner scanner;
 
+        private final EcosistemaBridge bridge;
+
     /**
      * Utility helper per la gestione della console.
      */
@@ -61,7 +63,12 @@ public final class Menu {
      * @param scanner Scanner condiviso per gli input da tastiera
      */
     public Menu(Scanner scanner) {
+                this(scanner, new EcosistemaBridge());
+        }
+
+        public Menu(Scanner scanner, EcosistemaBridge bridge) {
         this.scanner = scanner;
+                this.bridge = bridge;
         this.console = new ConsoleUtils(scanner);
         this.comuneService = new ComuneService();
         this.archivioService = new ArchivioService();
@@ -206,6 +213,8 @@ public final class Menu {
         Cittadino cittadino =
                 inputCittadino(Optional.empty(), Set.of());
 
+        bridge.setPendingCitizen(cittadino);
+
         System.out.println(
                 AnsiColor.paint(
                         "\nCodice fiscale calcolato: "
@@ -222,6 +231,7 @@ public final class Menu {
         );
 
         console.pause();
+                bridge.clearPendingCitizen();
     }
 
     /**
