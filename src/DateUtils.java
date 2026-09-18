@@ -5,31 +5,23 @@ import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.Optional;
 /**
- * Classe Utility per la gestione, la validazione, il parsing e la formattazione delle date.
- * Configura formati rigidi sia per lo standard di archiviazione che per la visualizzazione italiana.
+ * Metodi statici per parsing, formattazione e calcolo dell'eta.
+ * Nel CSV le date sono in ISO, all'utente si mostrano in formato italiano.
  */
 public final class DateUtils {
-    /**
-     * Formattatore standard ISO per l'archiviazione interna dei dati (AAAA-MM-GG).
-     */
+    // formato usato nel file CSV (yyyy-MM-dd)
     public static final DateTimeFormatter STORAGE = DateTimeFormatter.ISO_LOCAL_DATE;
-      /**
-     * Formattatore rigoroso per le date nel classico formato italiano (GG/MM/AAAA).
-     * Utilizza {@link ResolverStyle#STRICT} per invalidare date fittizie (es. 29/02 in anni non bisestili).
-     */
+      // formato mostrato/letto a schermo. STRICT serve a scartare date tipo
+      // 30/02 o 29/02 in anni non bisestili, che altrimenti verrebbero corrette
     public static final DateTimeFormatter ITALIAN = DateTimeFormatter.ofPattern("dd/MM/uuuu")
             .withResolverStyle(ResolverStyle.STRICT);
-  /**
-     * Costruttore privato vuoto per impedire l'istanziazione della classe.
-     * Essendo una classe di sole utility con metodi statici, evita l'uso non necessario di 'new DateUtils()'.
-     */
     private DateUtils() {
     }
     /**
-     * Tenta il parsing di una stringa di testo interpretandola secondo il formato data italiano (GG/MM/AAAA).
-     * 
-     * @param value La stringa contenente la data da analizzare
-     * @return Un {@link Optional} contenente l'oggetto {@link LocalDate} se valido, altrimenti un Optional vuoto
+     * Legge una data scritta come GG/MM/AAAA.
+     *
+     * @param value testo da interpretare
+     * @return la data, oppure Optional vuoto se il testo non e' una data valida
      */
     public static Optional<LocalDate> parseItalianDate(String value) {
         if (value == null || value.isBlank()) {
@@ -42,10 +34,10 @@ public final class DateUtils {
         }
     }
     /**
-     * Tenta il parsing di una stringa di testo interpretandola secondo lo standard ISO di archiviazione (AAAA-MM-GG).
-     * 
-     * @param value La stringa contenente la data di storage da analizzare
-     * @return Un {@link Optional} contenente l'oggetto {@link LocalDate} se valido, altrimenti un Optional vuoto
+     * Come sopra ma per il formato ISO salvato su file.
+     *
+     * @param value testo da interpretare
+     * @return la data, oppure Optional vuoto
      */
     public static Optional<LocalDate> parseStorageDate(String value) {
         if (value == null || value.isBlank()) {
@@ -58,28 +50,24 @@ public final class DateUtils {
         }
     }
    /**
-     * Converte un oggetto LocalDate in una stringa formattata secondo lo standard italiano (GG/MM/AAAA).
-     * 
-     * @param date L'oggetto data da formattare
-     * @return La stringa testuale della data formattata, o una stringa vuota se l'input è null
+     * @param date data da formattare
+     * @return la data come GG/MM/AAAA, stringa vuota se null
      */
     public static String formatItalian(LocalDate date) {
         return date == null ? "" : date.format(ITALIAN);
     }
    /**
-     * Converte un oggetto LocalDate in una stringa formattata secondo lo standard ISO di storage (AAAA-MM-GG).
-     * 
-     * @param date L'oggetto data da formattare
-     * @return La stringa testuale della data pronta per l'archivio, o una stringa vuota se l'input è null
+     * @param date data da formattare
+     * @return la data in ISO, pronta per il CSV
      */
     public static String formatStorage(LocalDate date) {
         return date == null ? "" : date.format(STORAGE);
     }
     /**
-     * Calcola l'età anagrafica espressa in anni calcolando la differenza temporale tra la data di nascita e il momento attuale.
-     * 
-     * @param birthDate La data di nascita da verificare
-     * @return L'età calcolata in anni compiuti, oppure 0 se il parametro è null
+     * Anni compiuti alla data di oggi.
+     *
+     * @param birthDate data di nascita
+     * @return l'eta in anni, 0 se la data manca
      */
     public static int age(LocalDate birthDate) {
         if (birthDate == null) {

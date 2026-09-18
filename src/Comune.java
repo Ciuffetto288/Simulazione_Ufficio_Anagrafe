@@ -2,39 +2,24 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Rappresenta un comune italiano identificato tramite:
- * <ul>
- *     <li>Nome del comune</li>
- *     <li>Sigla della provincia</li>
- *     <li>Codice catastale ministeriale</li>
- * </ul>
- * 
- * L'oggetto è immutabile e viene utilizzato per la gestione
- * dei dati territoriali associati al codice fiscale.
+ * Un comune italiano: nome, sigla della provincia e codice catastale.
+ * I campi vengono assegnati nel costruttore e non cambiano piu'.
  */
 public final class Comune {
 
-    /**
-     * Nome ufficiale del comune.
-     */
     private final String nome;
-
-    /**
-     * Sigla automobilistica della provincia.
-     */
     private final String provincia;
 
-    /**
-     * Codice catastale ufficiale del comune.
-     */
+    // il codice che finisce nelle posizioni 12-15 del codice fiscale
     private final String codiceCatastale;
 
     /**
-     * Costruisce un nuovo oggetto Comune normalizzando automaticamente i valori testuali.
-     * 
-     * @param nome Nome del comune
-     * @param provincia Sigla della provincia
-     * @param codiceCatastale Codice catastale ministeriale
+     * Normalizza i valori in ingresso: provincia e codice catastale vengono
+     * messi in maiuscolo, cosi' i confronti successivi non devono pensarci.
+     *
+     * @param nome nome del comune
+     * @param provincia sigla della provincia
+     * @param codiceCatastale codice catastale
      */
     public Comune(String nome, String provincia, String codiceCatastale) {
         this.nome = nome == null ? "" : nome.trim();
@@ -47,45 +32,24 @@ public final class Comune {
                 : codiceCatastale.trim().toUpperCase(Locale.ITALIAN);
     }
 
-    /**
-     * Restituisce il nome del comune.
-     * 
-     * @return Nome del comune
-     */
     public String getNome() {
         return nome;
     }
 
-    /**
-     * Restituisce la sigla della provincia.
-     * 
-     * @return Provincia del comune
-     */
     public String getProvincia() {
         return provincia;
     }
 
-    /**
-     * Restituisce il codice catastale del comune.
-     * 
-     * @return Codice catastale ministeriale
-     */
     public String getCodiceCatastale() {
         return codiceCatastale;
     }
 
     /**
-     * Verifica se il nome del comune corrisponde alla query di ricerca specificata.
-     * 
-     * Il confronto viene effettuato in forma normalizzata ignorando:
-     * <ul>
-     *     <li>Maiuscole e minuscole</li>
-     *     <li>Accenti</li>
-     *     <li>Caratteri speciali</li>
-     * </ul>
-     * 
-     * @param query Testo da cercare
-     * @return true se il nome contiene la query normalizzata
+     * Confronto usato dalla ricerca: ignora maiuscole e accenti, quindi
+     * "forli" trova "Forli'" e "SAN GIOVANNI" trova "San Giovanni".
+     *
+     * @param query testo cercato
+     * @return true se il nome contiene la query
      */
     public boolean matchesName(String query) {
         return StringUtils.normalizeSearch(nome)
@@ -93,13 +57,10 @@ public final class Comune {
     }
 
     /**
-     * Restituisce una rappresentazione leggibile del comune.
+     * Volutamente senza codice catastale: negli elenchi a schermo servono
+     * solo nome e provincia.
      *
-     * <p>La stringa non mostra il codice catastale, cosi gli elenchi e i
-     * suggerimenti restano comprensibili anche a chi conosce solo comune e
-     * provincia.</p>
-     *
-     * @return stringa descrittiva nel formato {@code Nome (Provincia)}
+     * @return il comune nel formato {@code Nome (Provincia)}
      */
     @Override
     public String toString() {
@@ -107,10 +68,11 @@ public final class Comune {
     }
 
     /**
-     * Confronta due comuni utilizzando il codice catastale come identificatore univoco.
-     * 
-     * @param obj Oggetto da confrontare
-     * @return true se i comuni possiedono lo stesso codice catastale
+     * Due comuni sono lo stesso comune se hanno lo stesso codice catastale
+     * (il nome da solo non basta, ci sono omonimie tra province diverse).
+     *
+     * @param obj oggetto da confrontare
+     * @return true se il codice catastale coincide
      */
     @Override
     public boolean equals(Object obj) {
@@ -125,11 +87,6 @@ public final class Comune {
         return codiceCatastale.equals(other.codiceCatastale);
     }
 
-    /**
-     * Restituisce l'hash associato al comune basato sul codice catastale.
-     * 
-     * @return Valore hash del comune
-     */
     @Override
     public int hashCode() {
         return Objects.hash(codiceCatastale);

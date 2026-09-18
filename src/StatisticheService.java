@@ -4,23 +4,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 /**
- * Classe di Servizio per il calcolo e la generazione di metriche statistiche sui cittadini registrati.
- * Estrae informazioni aggregate quali distribuzioni di genere, età media e densità geografica.
+ * Produce il report di riepilogo sull'archivio (conteggi, eta media, comuni).
  */
 public final class StatisticheService {
 
-    /**
-     * Costruisce un servizio statistico senza stato interno.
-     */
     public StatisticheService() {
     }
 
     /**
-     * Elabora i dati anagrafici dei cittadini forniti e genera un report testuale riassuntivo delle statistiche.
-     * Il report include il totale dei record, il conteggio per sesso, l'età media e i primi 10 comuni più frequenti.
-     * 
-     * @param cittadini La lista di oggetti {@link Cittadino} da analizzare
-     * @return Una stringa multilinea contenente il report statistico formattato pronto per la stampa
+     * Totale record, uomini, donne, eta media e i 10 comuni piu' ricorrenti.
+     * Il testo torna gia' impaginato, pronto da stampare a schermo.
+     *
+     * @param cittadini archivio da analizzare
+     * @return il report su piu' righe
      */
     public String report(List<Cittadino> cittadini) {
         int total = cittadini.size();
@@ -40,6 +36,8 @@ public final class StatisticheService {
         report.append("Eta media        : ").append(String.format("%.1f", averageAge)).append('\n');
         report.append("\nComuni piu presenti:\n");
 
+        // conteggio per comune, ordinato per numero decrescente e a pari
+        // merito in ordine alfabetico, altrimenti l'ordine cambia ogni volta
         Map<String, Long> byComune = cittadini.stream()
                 .collect(Collectors.groupingBy(Cittadino::getComune, Collectors.counting()));
         byComune.entrySet().stream()

@@ -4,51 +4,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Classe di utilità per la gestione dei percorsi utilizzati dall'applicazione.
- * <p>
- * Tutti i dati persistenti vengono memorizzati in una directory appropriata
- * per il sistema operativo corrente:
- * <ul>
- *     <li>Windows: {@code %APPDATA%\Anagr_fe}</li>
- *     <li>macOS: {@code ~/Library/Anagr_fe}</li>
- *     <li>Linux: {@code ~/.config/Anagr_fe}</li>
- * </ul>
- * e nella relativa sottocartella:
- * <pre>
- * data
- * </pre>
+ * Decide dove tenere i file dell'applicazione.
+ * I dati non stanno nella cartella del programma ma nella cartella utente del
+ * sistema (APPDATA su Windows, ~/Library su mac, ~/.config su Linux), dentro
+ * una sottocartella "data": in questo modo l'archivio sopravvive anche se si
+ * sposta o ricompila il progetto.
  */
 public final class AppPaths {
 
-    /**
-     * Directory principale dell'applicazione.
-     */
+    // calcolata una volta sola al primo utilizzo della classe
     private static final Path APP_DIR = detectAppDir();
 
-    /**
-     * Costruttore privato per impedire l'istanziazione della classe.
-     * Essendo una utility class composta esclusivamente da metodi statici,
-     * non deve essere creata tramite operatore {@code new}.
-     */
     private AppPaths() {
     }
 
-    /**
-     * Restituisce il percorso della directory principale dell'applicazione.
-     *
-     * @return percorso della directory applicativa
-     */
     public static Path appDir() {
         return APP_DIR;
     }
 
     /**
-     * Restituisce il percorso della directory contenente i dati applicativi.
-     * <p>
-     * Se la cartella non esiste viene creata automaticamente.
+     * Cartella dei dati, creata al volo se non esiste ancora.
      *
-     * @return percorso della cartella dati dell'applicazione
-     * @throws IllegalStateException se la cartella non può essere creata
+     * @return il percorso della cartella
+     * @throws IllegalStateException se non si riesce a crearla
      */
     public static Path dataDir() {
         Path dir = APP_DIR.resolve("data");
@@ -66,36 +44,20 @@ public final class AppPaths {
     }
 
     /**
-     * Restituisce il percorso completo di un file situato nella cartella dati
-     * dell'applicazione.
-     *
-     * @param fileName nome del file da localizzare
-     * @return percorso completo del file richiesto
+     * @param fileName nome del file dentro la cartella dati
+     * @return il percorso completo
      */
     public static Path dataFile(String fileName) {
         return dataDir().resolve(fileName);
     }
 
-    /**
-     * Individua e prepara la directory principale dell'applicazione
-     * in una posizione appropriata per il sistema operativo corrente.
-     * <p>
-     * Percorsi utilizzati:
-     * <ul>
-     *     <li>Windows: {@code %APPDATA%\Anagr_fe}</li>
-     *     <li>macOS: {@code ~/Library/Anagr_fe}</li>
-     *     <li>Linux: {@code ~/.config/Anagr_fe}</li>
-     * </ul>
-     *
-     * @return percorso della directory applicativa
-     * @throws IllegalStateException se la directory non può essere determinata
-     *                               oppure creata
-     */
+    // sceglie la cartella in base al sistema operativo e la crea se manca
     private static Path detectAppDir() {
         String os = System.getProperty("os.name").toLowerCase();
         Path appDir;
 
         if (os.contains("win")) {
+            // su Windows il posto giusto e' APPDATA, non la home
             String appData = System.getenv("APPDATA");
 
             if (appData == null || appData.isBlank()) {

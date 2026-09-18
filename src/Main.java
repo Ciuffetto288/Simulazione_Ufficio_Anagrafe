@@ -1,21 +1,16 @@
 import java.util.Arrays;
 import java.util.Scanner;
 /**
- * Classe principale (Entry Point) dell'applicazione per la simulazione del calcolo del codice fiscale.
- * Si occupa di elaborare gli argomenti della riga di comando e di avviare il menu di interfaccia utente.
+ * Entry point del programma. Legge i flag da riga di comando e avvia il menu.
  */
 public final class Main {
-        /**
-     * Costruttore privato vuoto per impedirne l'istanziazione.
-     * Trattandosi dell'entry point dell'applicazione, evita l'uso non necessario di 'new Main()'.
-     */
     private Main() {
     }
     /**
-     * Il punto di inizio dell'esecuzione del programma.
-     * Analizza i flag passati in input e decide se avviare la suite di self-test o l'interfaccia menu.
-     * 
-     * @param args Gli argomenti passati da riga di comando (es. "--self-test" o "--fast")
+     * Flag riconosciuti: --self-test esegue i controlli interni ed esce,
+     * --fast accorcia la schermata iniziale.
+     *
+     * @param args argomenti da riga di comando
      */
     public static void main(String[] args) {
         if (Arrays.asList(args).contains("--self-test")) {
@@ -24,6 +19,8 @@ public final class Main {
         }
 
         boolean fastSplash = Arrays.asList(args).contains("--fast");
+
+        // un solo Scanner per tutta l'applicazione, chiuso all'uscita
         try (Scanner scanner = new Scanner(System.in)) {
             new Menu(scanner).start(fastSplash);
         }

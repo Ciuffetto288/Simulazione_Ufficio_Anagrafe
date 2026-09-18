@@ -2,24 +2,19 @@ import java.time.LocalDate;
 import java.util.Set;
 
 /**
- * Esegue una piccola suite di test interni avviabile da riga di comando.
- *
- * <p>I test controllano le parti più delicate dell'applicazione: generazione del
- * codice fiscale, gestione dell'omocodia, validazione del codice generato e
- * ricerca flessibile dei comuni con provincia scritta nello stesso campo.</p>
+ * Controlli rapidi da lanciare con --self-test.
+ * Non e' JUnit: sono due assert scritti a mano, ma bastano per accorgersi
+ * subito se una modifica rompe il calcolo del codice fiscale o la ricerca
+ * dei comuni. I casi "Rovigo (RO)" e "Monselice PD" sono qui perche' in
+ * passato davano problemi.
  */
 public final class SelfTest {
 
-    /**
-     * Costruttore privato per impedire l'istanziazione della classe di utility.
-     */
     private SelfTest() {
     }
 
     /**
-     * Esegue l'intera suite di controlli automatici.
-     *
-     * @throws IllegalStateException se uno dei controlli fallisce
+     * @throws IllegalStateException al primo controllo che fallisce
      */
     public static void run() {
         CodiceFiscaleService codiceService = new CodiceFiscaleService();
@@ -45,6 +40,7 @@ public final class SelfTest {
                 "H501",
                 marioRossi
         );
+        // stesso cittadino con il codice gia' occupato: deve uscire un omocodice
         String omocode = codiceService.genera(base, Set.of(marioRossi));
         assertTrue(!omocode.equals(marioRossi), "Omocodia generata in caso di collisione");
 
@@ -81,27 +77,12 @@ public final class SelfTest {
         System.out.println("Self-test completato: generazione, omocodia e validazione OK.");
     }
 
-    /**
-     * Verifica l'uguaglianza tra il valore atteso e quello calcolato.
-     *
-     * @param expected valore teorico atteso dal test
-     * @param actual valore reale ottenuto dall'algoritmo
-     * @param label descrizione del controllo in esecuzione
-     * @throws IllegalStateException se il valore ottenuto differisce da quello atteso
-     */
     private static void assertEquals(String expected, String actual, String label) {
         if (!expected.equals(actual)) {
             throw new IllegalStateException(label + " - atteso " + expected + ", ottenuto " + actual);
         }
     }
 
-    /**
-     * Verifica una condizione booleana attesa come vera.
-     *
-     * @param condition condizione verificata dal test
-     * @param label descrizione del controllo in esecuzione
-     * @throws IllegalStateException se la condizione risulta falsa
-     */
     private static void assertTrue(boolean condition, String label) {
         if (!condition) {
             throw new IllegalStateException(label + " - condizione non soddisfatta");

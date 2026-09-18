@@ -4,66 +4,37 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Rappresenta un cittadino gestito dall'archivio anagrafico.
- *
- * <p>La classe conserva sia i dati leggibili dall'utente, come nome, cognome,
- * comune e provincia, sia il codice catastale necessario al calcolo del codice
- * fiscale. Il codice catastale resta quindi disponibile internamente, ma non
- * viene mostrato nelle schede e nelle esportazioni pensate per l'utente finale.</p>
+ * Il record di un cittadino in archivio.
+ * Tiene dentro anche il codice catastale del comune, che serve per ricalcolare
+ * il codice fiscale in caso di modifica, ma non lo mostra mai all'utente:
+ * nelle schede e negli export si vedono comune e provincia.
  */
 public final class Cittadino {
 
-    /**
-     * Nome del cittadino.
-     */
     private String nome;
-
-    /**
-     * Cognome del cittadino.
-     */
     private String cognome;
-
-    /**
-     * Data di nascita del cittadino.
-     */
     private LocalDate dataNascita;
-
-    /**
-     * Sesso anagrafico del cittadino, espresso come {@code M} oppure {@code F}.
-     */
+    // M o F
     private char sesso;
-
-    /**
-     * Nome leggibile del comune di nascita.
-     */
     private String comune;
-
-    /**
-     * Sigla della provincia di nascita.
-     */
     private String provincia;
-
-    /**
-     * Codice catastale del comune, usato solo per calcolo e persistenza interna.
-     */
+    // catastale: dato interno, non si mostra all'utente
     private String codiceComune;
-
-    /**
-     * Codice fiscale del cittadino.
-     */
     private String codiceFiscale;
 
     /**
-     * Costruisce un nuovo cittadino normalizzando i valori testuali ricevuti.
+     * Normalizza tutto quello che arriva: iniziali maiuscole su nome, cognome e
+     * comune, maiuscolo pieno su provincia, codici e sesso. Cosi' i dati
+     * risultano uniformi anche se l'utente scrive "mario ROSSI".
      *
      * @param nome nome del cittadino
      * @param cognome cognome del cittadino
      * @param dataNascita data di nascita
-     * @param sesso sesso anagrafico, {@code M} oppure {@code F}
+     * @param sesso M oppure F
      * @param comune comune di nascita
      * @param provincia sigla della provincia
-     * @param codiceComune codice catastale del comune, necessario al codice fiscale
-     * @param codiceFiscale codice fiscale del cittadino
+     * @param codiceComune codice catastale del comune
+     * @param codiceFiscale codice fiscale calcolato
      */
     public Cittadino(
             String nome,
@@ -85,92 +56,55 @@ public final class Cittadino {
         this.codiceFiscale = codiceFiscale == null ? "" : codiceFiscale.trim().toUpperCase(Locale.ITALIAN);
     }
 
-    /**
-     * Restituisce il nome del cittadino.
-     *
-     * @return nome del cittadino
-     */
     public String getNome() {
         return nome;
     }
 
-    /**
-     * Restituisce il cognome del cittadino.
-     *
-     * @return cognome del cittadino
-     */
     public String getCognome() {
         return cognome;
     }
 
-    /**
-     * Restituisce la data di nascita.
-     *
-     * @return data di nascita del cittadino
-     */
     public LocalDate getDataNascita() {
         return dataNascita;
     }
 
-    /**
-     * Restituisce il sesso anagrafico.
-     *
-     * @return {@code M} oppure {@code F}
-     */
     public char getSesso() {
         return sesso;
     }
 
-    /**
-     * Restituisce il comune di nascita in forma leggibile.
-     *
-     * @return nome del comune
-     */
     public String getComune() {
         return comune;
     }
 
-    /**
-     * Restituisce la sigla della provincia di nascita.
-     *
-     * @return sigla provincia
-     */
     public String getProvincia() {
         return provincia;
     }
 
     /**
-     * Restituisce il codice catastale del comune.
+     * Usato da calcolo e salvataggio, non dalle stampe a schermo.
      *
-     * <p>Questo dato è necessario per il calcolo del codice fiscale e per lo
-     * storage interno, ma viene nascosto nelle visualizzazioni rivolte all'utente.</p>
-     *
-     * @return codice catastale del comune
+     * @return il codice catastale del comune di nascita
      */
     public String getCodiceComune() {
         return codiceComune;
     }
 
-    /**
-     * Restituisce il codice fiscale.
-     *
-     * @return codice fiscale del cittadino
-     */
     public String getCodiceFiscale() {
         return codiceFiscale;
     }
 
     /**
-     * Aggiorna tutti i dati anagrafici applicando la stessa normalizzazione del costruttore.
+     * Sovrascrive tutti i campi, con le stesse regole del costruttore.
+     * Viene chiamato dalla voce "modifica cittadino" del menu.
      *
      * @param nome nuovo nome
      * @param cognome nuovo cognome
      * @param dataNascita nuova data di nascita
-     * @param sesso nuovo sesso anagrafico
-     * @param comune nuovo comune di nascita
+     * @param sesso nuovo sesso
+     * @param comune nuovo comune
      * @param provincia nuova provincia
-     * @param codiceComune nuovo codice catastale interno del comune
-     * @param codiceFiscale nuovo codice fiscale
+     * @param codiceComune nuovo codice catastale
+     * @param codiceFiscale codice fiscale ricalcolato
      */
     public void update(
             String nome,
@@ -193,10 +127,10 @@ public final class Cittadino {
     }
 
     /**
-     * Verifica se il cittadino corrisponde a una query testuale.
+     * Ricerca libera su nome, cognome e codice fiscale.
      *
-     * @param query testo inserito dall'utente per la ricerca
-     * @return {@code true} se la query è contenuta in nome, cognome o codice fiscale
+     * @param query testo inserito dall'utente
+     * @return true se almeno uno dei tre campi contiene la query
      */
     public boolean matches(String query) {
         String normalized = StringUtils.normalizeSearch(query);
@@ -206,12 +140,10 @@ public final class Cittadino {
     }
 
     /**
-     * Genera una riga CSV per il salvataggio persistente dell'archivio.
+     * Riga da scrivere in cittadini.csv: 8 campi, codice catastale compreso,
+     * data in ISO. E' il formato che si rilegge all'avvio.
      *
-     * <p>Questa riga mantiene anche il codice catastale, perché il file di storage
-     * deve conservare tutti i dati necessari a ricalcoli e modifiche future.</p>
-     *
-     * @return stringa CSV interna con i valori separati da punto e virgola
+     * @return la riga separata da punto e virgola
      */
     public String toStorageLine() {
         return String.join(";",
@@ -227,12 +159,10 @@ public final class Cittadino {
     }
 
     /**
-     * Genera una riga CSV destinata all'esportazione per l'utente.
+     * Riga per l'export: 7 campi, senza codice catastale e con la data in
+     * formato italiano. Non e' lo stesso formato del salvataggio.
      *
-     * <p>La riga mostra comune e provincia, ma non il codice catastale, così il
-     * file esportato rimane leggibile senza conoscere codici amministrativi.</p>
-     *
-     * @return stringa CSV per esportazione esterna
+     * @return la riga da mettere nel file esportato
      */
     public String toCsvLine() {
         return String.join(";",
@@ -247,9 +177,7 @@ public final class Cittadino {
     }
 
     /**
-     * Genera una riga a colonne fisse per la visualizzazione tabellare.
-     *
-     * @return stringa formattata per viste tabellari da terminale
+     * @return la riga a colonne fisse usata nella tabella e nell'export TXT
      */
     public String toTableLine() {
         return String.format("%-18s %-18s %-12s %-4s %-22s %-4s %-16s",
@@ -264,13 +192,10 @@ public final class Cittadino {
     }
 
     /**
-     * Genera una scheda testuale del cittadino incorniciata in ASCII.
+     * Scheda singola con la cornice in ASCII, quella che si vede dopo un
+     * salvataggio o una ricerca.
      *
-     * <p>La scheda espone i dati utili a una persona: nome, cognome, data,
-     * comune, provincia, sesso e codice fiscale. Il codice catastale resta
-     * nascosto perché è un dato tecnico interno.</p>
-     *
-     * @return stringa multilinea contenente la scheda grafica del cittadino
+     * @return la scheda su piu' righe
      */
     public String toCard() {
         String[] rows = {
@@ -294,10 +219,12 @@ public final class Cittadino {
     }
 
     /**
-     * Ricostruisce un cittadino partendo da una riga CSV letta dallo storage.
+     * Ricostruisce un cittadino da una riga del file.
+     * Le righe rovinate o incomplete vengono scartate senza bloccare la
+     * lettura del resto dell'archivio.
      *
-     * @param line riga di testo CSV letta dal file
-     * @return {@link Optional} con il cittadino ricostruito, oppure vuoto se la riga non è valida
+     * @param line riga letta dal CSV
+     * @return il cittadino, oppure Optional vuoto se la riga non va bene
      */
     public static Optional<Cittadino> fromStorageLine(String line) {
         if (line == null || line.isBlank()) {
@@ -307,6 +234,8 @@ public final class Cittadino {
         if (parts.size() < 8) {
             return Optional.empty();
         }
+        // normalmente la data e' in ISO, ma provo anche il formato italiano
+        // per gli archivi salvati con le prime versioni del programma
         Optional<LocalDate> date = DateUtils.parseStorageDate(parts.get(2));
         if (date.isEmpty()) {
             date = DateUtils.parseItalianDate(parts.get(2));
@@ -326,24 +255,12 @@ public final class Cittadino {
         ));
     }
 
-    /**
-     * Genera una riga della scheda testuale allineando etichetta e valore.
-     *
-     * @param label etichetta del campo informativo
-     * @param value valore testuale associato all'etichetta
-     * @return stringa formattata e racchiusa tra i bordi della scheda
-     */
+    // una riga della scheda: etichetta a sinistra, valore a destra
     private static String row(String label, String value) {
         return String.format("| %-18s | %-34s |", label, trim(value, 34));
     }
 
-    /**
-     * Taglia una stringa se supera la lunghezza massima consentita.
-     *
-     * @param value stringa di testo originale da verificare
-     * @param max numero massimo di caratteri consentiti
-     * @return stringa originale se rientra nei limiti, altrimenti valore troncato con punto finale
-     */
+    // taglia i valori troppo lunghi, altrimenti la cornice si sfonda
     private static String trim(String value, int max) {
         String safe = value == null ? "" : value;
         if (safe.length() <= max) {

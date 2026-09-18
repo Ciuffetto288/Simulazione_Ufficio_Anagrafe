@@ -1,10 +1,8 @@
 /**
- * Classe Utility per la gestione e la visualizzazione di grafiche in formato ASCII Art sul terminale.
+ * Schermata iniziale con il logo in ASCII art.
  */
 public final class AsciiArt {
-    /**
-     * Stringa contenente il logo monumentale "ANAGRAFE" in formato ASCII Art.
-     */
+    // logo generato con un tool di ASCII art e incollato qui come stringa
     private static final String AsciiArtAnagrafe = "  ______   __    __   ______    ______   _______       ______      ________  ________ \r\n" + //
                 " /      \\ /  \\  /  | /      \\  /      \\ /       \\    _/      \\_   /        |/        |\r\n" + //
                 "/$$$$$$  |$$  \\ $$ |/$$$$$$  |/$$$$$$  |$$$$$$$  |  / $$$$$$   \\  $$$$$$$$/ $$$$$$$$/ \r\n" + //
@@ -18,19 +16,15 @@ public final class AsciiArt {
                 "                                                    $$$    $$$/                       \r\n" + //
                 "                                                      $$$$$$/                         ";
                 
-    /**
-     * Costruttore privato vuoto per impedire l'istanziazione della classe.
-     * Essendo una classe di sole utility con metodi statici, evita l'uso non necessario di 'new AsciiArt()'.
-     */
     private AsciiArt() {
     }
 
     /**
-     * Pulisce lo schermo e mostra la schermata iniziale di benvenuto (Splash Screen).
-     * Stampa il logo colorato di verde, i dati dell'autore, la versione e mette in pausa il programma.
-     * 
-     * @param console L'istanza di {@link ConsoleUtils} utilizzata per pulire lo schermo della console
-     * @param fast    Se impostato a true riduce la pausa iniziale a 300ms, altrimenti attende 5000ms (5 secondi)
+     * Pulisce lo schermo, mostra logo, autore e versione, poi aspetta un attimo
+     * prima di passare al menu.
+     *
+     * @param console usata per pulire lo schermo
+     * @param fast    con true la pausa scende a 300ms invece di 5 secondi
      */
     public static void showSplash(ConsoleUtils console, boolean fast) {
         console.clearScreen();

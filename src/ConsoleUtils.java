@@ -3,38 +3,27 @@ import java.util.Optional;
 import java.util.Scanner;
 
 /**
- * Classe utility dedicata alla gestione dell'input/output da console.
- * 
- * Fornisce metodi semplificati per:
- * <ul>
- *     <li>Lettura sicura dei dati utente</li>
- *     <li>Validazione degli input</li>
- *     <li>Gestione delle date</li>
- *     <li>Conferme interattive</li>
- *     <li>Messaggi colorati in console</li>
- * </ul>
+ * Tutte le letture da tastiera passano da qui.
+ * I metodi read* insistono finche' il dato non e' valido, invece di propagare
+ * eccezioni al menu: in un programma interattivo conviene richiedere il dato
+ * sul posto. I metodi readOptional* servono in modifica, dove il campo lasciato
+ * vuoto significa "tieni il valore che c'e' gia'".
  */
 public final class ConsoleUtils {
 
-    /**
-     * Scanner condiviso utilizzato per leggere gli input dalla console.
-     */
     private final Scanner scanner;
 
     /**
-     * Costruisce un nuovo helper per la gestione della console.
-     * 
-     * @param scanner Scanner utilizzato per leggere gli input utente
+     * @param scanner lo Scanner aperto da Main, condiviso da tutta l'applicazione
      */
     public ConsoleUtils(Scanner scanner) {
         this.scanner = scanner;
     }
 
     /**
-     * Pulisce la schermata della console.
-     * 
-     * Su Windows utilizza il comando "cls",
-     * mentre sugli altri sistemi usa sequenze ANSI.
+     * Pulisce lo schermo. Su Windows serve il comando cls, altrove basta la
+     * sequenza ANSI. Se non funziona nessuno dei due si stampa solo una riga
+     * vuota: peggiora l'estetica ma non blocca il programma.
      */
     public void clearScreen() {
         try {
@@ -56,13 +45,12 @@ public final class ConsoleUtils {
 
         } catch (Exception ex) {
 
+            // terminale che non supporta ne' cls ne' ANSI: mi limito a una riga vuota
             System.out.println();
         }
     }
 
-    /**
-     * Mette in pausa l'esecuzione attendendo la pressione del tasto INVIO.
-     */
+    /** Aspetta INVIO prima di tornare al menu. */
     public void pause() {
         System.out.print(
                 AnsiColor.paint(
@@ -75,10 +63,8 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge una riga di testo dalla console.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @return Testo inserito ripulito dagli spazi esterni
+     * @param label etichetta mostrata prima dei due punti
+     * @return il testo inserito, senza spazi ai bordi
      */
     public String readLine(String label) {
         System.out.print(label + ": ");
@@ -86,13 +72,10 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge un valore obbligatorio dalla console.
-     * 
-     * Continua a richiedere l'input finché l'utente
-     * non inserisce un valore non vuoto.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @return Valore obbligatorio inserito
+     * Richiede il dato finche' non arriva qualcosa di diverso dal vuoto.
+     *
+     * @param label etichetta mostrata all'utente
+     * @return il valore inserito
      */
     public String readRequired(String label) {
 
@@ -114,11 +97,9 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge un valore opzionale mantenendo quello corrente se l'utente lascia vuoto.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @param currentValue Valore corrente
-     * @return Nuovo valore oppure quello esistente
+     * @param label etichetta mostrata all'utente
+     * @param currentValue valore da tenere se l'utente batte solo INVIO
+     * @return il nuovo valore oppure quello vecchio
      */
     public String readOptional(String label, String currentValue) {
 
@@ -132,12 +113,10 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge una data obbligatoria nel formato italiano GG/MM/AAAA.
-     * 
-     * Continua a richiedere il valore finché la data non risulta valida.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @return Data validata
+     * Data in formato GG/MM/AAAA, richiesta finche' non e' valida.
+     *
+     * @param label etichetta mostrata all'utente
+     * @return la data inserita
      */
     public LocalDate readDate(String label) {
 
@@ -163,11 +142,9 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge una data opzionale mantenendo quella corrente se il campo resta vuoto.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @param currentValue Data attualmente salvata
-     * @return Nuova data oppure quella corrente
+     * @param label etichetta mostrata all'utente
+     * @param currentValue data da tenere se il campo resta vuoto
+     * @return la data nuova oppure quella vecchia
      */
     public LocalDate readOptionalDate(
             String label,
@@ -206,10 +183,8 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge il sesso anagrafico validando esclusivamente i valori M oppure F.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @return Carattere rappresentante il sesso
+     * @param label etichetta mostrata all'utente
+     * @return 'M' oppure 'F', gli unici valori accettati dal codice fiscale
      */
     public char readSex(String label) {
 
@@ -233,11 +208,9 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge il sesso anagrafico mantenendo il valore corrente se vuoto.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @param currentValue Valore attuale
-     * @return Nuovo valore oppure quello corrente
+     * @param label etichetta mostrata all'utente
+     * @param currentValue valore da tenere se il campo resta vuoto
+     * @return il sesso nuovo oppure quello vecchio
      */
     public char readOptionalSex(String label, char currentValue) {
 
@@ -268,12 +241,13 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Legge un numero intero compreso in un intervallo specificato.
-     * 
-     * @param label Etichetta mostrata all'utente
-     * @param min Valore minimo consentito
-     * @param max Valore massimo consentito
-     * @return Numero validato
+     * Numero intero dentro un intervallo, usato per le scelte di menu.
+     * Rifiuta sia il testo non numerico sia i valori fuori intervallo.
+     *
+     * @param label etichetta mostrata all'utente
+     * @param min minimo accettato
+     * @param max massimo accettato
+     * @return il numero inserito
      */
     public int readInt(String label, int min, int max) {
 
@@ -304,16 +278,10 @@ public final class ConsoleUtils {
     }
 
     /**
-     * Richiede una conferma booleana all'utente.
-     * 
-     * Accetta:
-     * <ul>
-     *     <li>S / SI</li>
-     *     <li>N / NO</li>
-     * </ul>
-     * 
-     * @param label Messaggio di conferma
-     * @return true se confermato, false altrimenti
+     * Conferma S/N (accetta anche SI e NO scritti per intero).
+     *
+     * @param label domanda mostrata all'utente
+     * @return true se ha risposto si'
      */
     public boolean confirm(String label) {
 

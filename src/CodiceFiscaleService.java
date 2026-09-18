@@ -11,27 +11,20 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Servizio dedicato alla generazione, verifica e gestione del Codice Fiscale italiano.
- * 
- * Implementa le regole ufficiali ministeriali per:
- * <ul>
- *     <li>Calcolo delle componenti anagrafiche</li>
- *     <li>Gestione del carattere di controllo</li>
- *     <li>Validazione strutturale del codice fiscale</li>
- *     <li>Supporto delle varianti omocodiche</li>
- * </ul>
+ * Generazione e verifica del codice fiscale.
+ *
+ * Il codice e' fatto di 16 caratteri: 3 per il cognome, 3 per il nome, 2 per
+ * l'anno, 1 per il mese, 2 per il giorno (con +40 per le donne), 4 per il
+ * comune e 1 di controllo. Se il codice risultante e' gia' in archivio si
+ * passa all'omocodia, cioe' si sostituiscono le cifre con lettere partendo
+ * da destra.
  */
 public final class CodiceFiscaleService {
 
-    /**
-     * Costruisce un servizio per calcolo, verifica e gestione dell'omocodia.
-     */
     public CodiceFiscaleService() {
     }
 
-    /**
-     * Mappa di conversione tra numero del mese e relativo codice alfabetico ministeriale.
-     */
+    // lettera del mese: non e' in ordine alfabetico, e' la tabella ufficiale
     private static final Map<Integer, Character> MONTH_CODES = Map.ofEntries(
             Map.entry(1, 'A'),
             Map.entry(2, 'B'),
@@ -47,14 +40,10 @@ public final class CodiceFiscaleService {
             Map.entry(12, 'T')
     );
 
-    /**
-     * Mappa inversa dei codici mese utilizzata in fase di validazione e decodifica.
-     */
+    // stessa tabella al contrario, per rileggere un codice esistente
     private static final Map<Character, Integer> MONTH_VALUES = createMonthValues();
 
-    /**
-     * Mappa ufficiale di conversione numeri-lettere per la gestione dell'omocodia.
-     */
+    // cifra -> lettera usata in caso di omocodia
     private static final Map<Character, Character> OMOCODIA = Map.of(
             '0', 'L',
             '1', 'M',
@@ -68,32 +57,25 @@ public final class CodiceFiscaleService {
             '9', 'V'
     );
 
-    /**
-     * Mappa inversa utilizzata per decodificare le lettere omocodiche nei valori numerici originali.
-     */
+    // e il contrario, per tornare al codice base
     private static final Map<Character, Character> OMOCODIA_REVERSE = createReverseOmocodia();
 
-    /**
-     * Posizioni ufficiali del codice fiscale soggette ad omocodia.
-     */
+    // le uniche posizioni che possono contenere cifre, quindi le uniche
+    // che l'omocodia puo' sostituire. Vanno usate da destra verso sinistra
     private static final int[] OMOCODIA_POSITIONS = {6, 7, 9, 10, 12, 13, 14};
 
-    /**
-     * Tabella dei valori associati ai caratteri in posizione dispari per il calcolo del checksum.
-     */
+    // tabelle del carattere di controllo: i caratteri in posizione dispari
+    // pesano diversamente da quelli in posizione pari
     private static final Map<Character, Integer> ODD_VALUES = createOddValues();
 
-    /**
-     * Tabella dei valori associati ai caratteri in posizione pari per il calcolo del checksum.
-     */
     private static final Map<Character, Integer> EVEN_VALUES = createEvenValues();
 
     /**
-     * Genera un codice fiscale completo partendo dai dati di un cittadino.
-     * 
-     * @param cittadino Oggetto contenente i dati anagrafici del cittadino
-     * @param codiciEsistenti Insieme dei codici fiscali già presenti per evitare collisioni
-     * @return Il codice fiscale generato
+     * Scorciatoia che prende i dati direttamente da un {@link Cittadino}.
+     *
+     * @param cittadino dati anagrafici
+     * @param codiciEsistenti codici gia' in archivio
+     * @return il codice fiscale
      */
     public String genera(Cittadino cittadino, Set<String> codiciEsistenti) {
         return genera(
@@ -107,16 +89,17 @@ public final class CodiceFiscaleService {
     }
 
     /**
-     * Genera un codice fiscale applicando automaticamente eventuali varianti omocodiche.
-     * 
-     * @param nome Nome della persona
-     * @param cognome Cognome della persona
-     * @param dataNascita Data di nascita
-     * @param sesso Sesso anagrafico ('M' oppure 'F')
-     * @param codiceComune Codice catastale del comune
-     * @param codiciEsistenti Archivio dei codici già esistenti
-     * @return Un codice fiscale univoco
-     * @throws IllegalStateException Se tutte le varianti omocodiche risultano già utilizzate
+     * Calcola il codice e, se risulta gia' occupato, cerca la prima variante
+     * omocodica libera.
+     *
+     * @param nome nome
+     * @param cognome cognome
+     * @param dataNascita data di nascita
+     * @param sesso 'M' oppure 'F'
+     * @param codiceComune codice catastale del comune di nascita
+     * @param codiciEsistenti codici gia' assegnati (puo' essere null)
+     * @return un codice non ancora usato
+     * @throws IllegalStateException se anche tutte le varianti sono occupate
      */
     public String genera(
             String nome,
@@ -139,6 +122,8 @@ public final class CodiceFiscaleService {
             return base;
         }
 
+        // collisione: due persone diverse con lo stesso codice. Provo le
+        // varianti in ordine, la prima libera va bene
         for (String variant : generaOmocodie(base)) {
             if (!used.contains(variant)) {
                 return variant;
@@ -149,14 +134,15 @@ public final class CodiceFiscaleService {
     }
 
     /**
-     * Genera un codice fiscale standard senza effettuare controlli di omocodia.
-     * 
-     * @param nome Nome della persona
-     * @param cognome Cognome della persona
-     * @param dataNascita Data di nascita
-     * @param sesso Sesso anagrafico
-     * @param codiceComune Codice catastale del comune
-     * @return Codice fiscale standard
+     * Solo il calcolo, senza guardare l'archivio: usato dalla voce di menu che
+     * mostra il codice fiscale senza salvare niente.
+     *
+     * @param nome nome
+     * @param cognome cognome
+     * @param dataNascita data di nascita
+     * @param sesso 'M' oppure 'F'
+     * @param codiceComune codice catastale del comune
+     * @return il codice fiscale base
      */
     public String generaSenzaOmocodia(
             String nome,
@@ -174,21 +160,13 @@ public final class CodiceFiscaleService {
     }
 
     /**
-     * Verifica la correttezza formale e strutturale di un codice fiscale.
-     * 
-     * Effettua controlli su:
-     * <ul>
-     *     <li>Lunghezza</li>
-     *     <li>Formato ufficiale</li>
-     *     <li>Checksum</li>
-     *     <li>Data di nascita</li>
-     *     <li>Codice comune</li>
-     *     <li>Omocodia</li>
-     * </ul>
-     * 
-     * @param codiceFiscale Codice fiscale da validare
-     * @param comuneService Servizio per il controllo dei codici catastali
-     * @return Oggetto contenente esito e dettagli della validazione
+     * Controlla un codice fiscale inserito a mano, nell'ordine: lunghezza,
+     * formato, carattere di controllo, data e comune. Al primo errore si ferma,
+     * perche' i controlli successivi leggerebbero dati senza senso.
+     *
+     * @param codiceFiscale codice da verificare
+     * @param comuneService serve per controllare il codice catastale (puo' essere null)
+     * @return esito e messaggi da mostrare all'utente
      */
     public ValidationResult verifica(String codiceFiscale, ComuneService comuneService) {
         List<String> messages = new ArrayList<>();
@@ -202,6 +180,7 @@ public final class CodiceFiscaleService {
             return new ValidationResult(false, messages);
         }
 
+        // le lettere ammesse dove ci sarebbero le cifre sono quelle dell'omocodia
         String pattern = "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]";
 
         if (!cf.matches(pattern)) {
@@ -218,6 +197,8 @@ public final class CodiceFiscaleService {
 
         messages.add("Checksum corretto.");
 
+        // riporto le eventuali lettere omocodiche a cifre, altrimenti non
+        // riesco a rileggere data e codice comune
         String decoded = decodificaOmocodia(cf.substring(0, 15)) + cf.charAt(15);
 
         int month = MONTH_VALUES.getOrDefault(decoded.charAt(8), -1);
@@ -227,6 +208,7 @@ public final class CodiceFiscaleService {
             return new ValidationResult(false, messages);
         }
 
+        // giorno oltre 40 significa donna: si sottrae 40 per il giorno vero
         int dayCode = Integer.parseInt(decoded.substring(9, 11));
         int day = dayCode > 40 ? dayCode - 40 : dayCode;
         char sesso = dayCode > 40 ? 'F' : 'M';
@@ -261,10 +243,13 @@ public final class CodiceFiscaleService {
     }
 
     /**
-     * Genera tutte le possibili varianti omocodiche di un codice fiscale base.
-     * 
-     * @param codiceFiscaleBase Codice fiscale di partenza
-     * @return Lista delle varianti omocodiche generate
+     * Tutte le combinazioni di sostituzione possibili sulle 7 posizioni
+     * numeriche, quindi 127 varianti. Il contatore mask viene usato come
+     * maschera di bit: ogni bit dice se sostituire una posizione, partendo
+     * dall'ultima. Ogni variante ha il suo carattere di controllo ricalcolato.
+     *
+     * @param codiceFiscaleBase codice di partenza
+     * @return le varianti, dalla piu' vicina al codice originale
      */
     public List<String> generaOmocodie(String codiceFiscaleBase) {
         String cf = codiceFiscaleBase.toUpperCase(Locale.ITALIAN);
@@ -296,21 +281,17 @@ public final class CodiceFiscaleService {
         return variants;
     }
 
-    /**
-     * Genera il codice alfabetico associato al cognome.
-     * 
-     * @param cognome Cognome da elaborare
-     * @return Codice di tre caratteri
-     */
+    // cognome: prime tre consonanti, poi le vocali, poi X di riempimento
     private static String codiceCognome(String cognome) {
         return consonantsThenVowels(cognome).substring(0, 3);
     }
 
     /**
-     * Genera il codice alfabetico associato al nome secondo le regole ministeriali.
-     * 
-     * @param nome Nome da elaborare
-     * @return Codice di tre caratteri
+     * Il nome segue una regola diversa dal cognome: con quattro o piu'
+     * consonanti si prendono la prima, la terza e la quarta (non la seconda).
+     *
+     * @param nome nome da elaborare
+     * @return tre caratteri
      */
     private static String codiceNome(String nome) {
         String clean = StringUtils.cleanName(nome);
@@ -333,12 +314,7 @@ public final class CodiceFiscaleService {
         return (consonants + vowels.toString() + "XXX").substring(0, 3);
     }
 
-    /**
-     * Restituisce una stringa composta prima dalle consonanti e poi dalle vocali.
-     * 
-     * @param value Valore anagrafico da elaborare
-     * @return Sequenza consonanti-vocali completata con caratteri di riempimento
-     */
+    // le XXX in coda coprono i nomi troppo corti tipo "Bo" o "Li"
     private static String consonantsThenVowels(String value) {
         String clean = StringUtils.cleanName(value);
 
@@ -356,13 +332,7 @@ public final class CodiceFiscaleService {
         return consonants + vowels.toString() + "XXX";
     }
 
-    /**
-     * Genera la porzione del codice fiscale relativa alla data di nascita e al sesso.
-     * 
-     * @param dataNascita Data di nascita
-     * @param sesso Sesso anagrafico
-     * @return Codice data composto da anno, mese e giorno
-     */
+    // anno (ultime due cifre) + lettera del mese + giorno, +40 se femmina
     private static String codiceData(LocalDate dataNascita, char sesso) {
         int year = dataNascita.getYear() % 100;
 
@@ -378,10 +348,12 @@ public final class CodiceFiscaleService {
     }
 
     /**
-     * Calcola il carattere di controllo finale del codice fiscale.
-     * 
-     * @param first15 Prime quindici posizioni del codice fiscale
-     * @return Carattere alfabetico di controllo
+     * Sedicesimo carattere: si sommano i valori dei primi 15 usando due tabelle
+     * diverse a seconda della posizione, poi si prende il resto della divisione
+     * per 26 come indice della lettera.
+     *
+     * @param first15 i primi 15 caratteri
+     * @return la lettera di controllo
      */
     public static char carattereControllo(String first15) {
         String value = first15.toUpperCase(Locale.ITALIAN);
@@ -401,12 +373,7 @@ public final class CodiceFiscaleService {
         return (char) ('A' + (sum % 26));
     }
 
-    /**
-     * Decodifica le lettere omocodiche riportandole ai rispettivi valori numerici.
-     * 
-     * @param first15 Prime quindici posizioni del codice fiscale
-     * @return Stringa decodificata
-     */
+    // riporta un codice omocodico al suo codice base
     private static String decodificaOmocodia(String first15) {
         char[] chars = first15.toCharArray();
 
@@ -417,13 +384,8 @@ public final class CodiceFiscaleService {
         return new String(chars);
     }
 
-    /**
-     * Verifica la validità di una combinazione mese-giorno.
-     * 
-     * @param month Numero del mese
-     * @param day Giorno del mese
-     * @return true se la data è valida, false altrimenti
-     */
+    // MonthDay accetta il 29 febbraio, giusto: nel codice fiscale non c'e'
+    // l'anno completo, quindi non si puo' sapere se era bisestile
     private static boolean validMonthDay(int month, int day) {
         try {
             MonthDay.of(month, day);
@@ -433,11 +395,6 @@ public final class CodiceFiscaleService {
         }
     }
 
-    /**
-     * Crea la mappa inversa dei codici mese.
-     * 
-     * @return Mappa codice mese -> numero mese
-     */
     private static Map<Character, Integer> createMonthValues() {
         Map<Character, Integer> values = new HashMap<>();
 
@@ -446,11 +403,6 @@ public final class CodiceFiscaleService {
         return values;
     }
 
-    /**
-     * Crea la mappa inversa utilizzata per decodificare l'omocodia.
-     * 
-     * @return Mappa lettera omocodica -> cifra originale
-     */
     private static Map<Character, Character> createReverseOmocodia() {
         Map<Character, Character> reverse = new HashMap<>();
 
@@ -459,11 +411,7 @@ public final class CodiceFiscaleService {
         return reverse;
     }
 
-    /**
-     * Costruisce la tabella dei valori associati ai caratteri in posizione pari.
-     * 
-     * @return Mappa carattere -> valore numerico
-     */
+    // posizioni pari: cifre e lettere valgono la loro posizione naturale
     private static Map<Character, Integer> createEvenValues() {
         Map<Character, Integer> values = new HashMap<>();
 
@@ -478,11 +426,7 @@ public final class CodiceFiscaleService {
         return values;
     }
 
-    /**
-     * Costruisce la tabella dei valori associati ai caratteri in posizione dispari.
-     * 
-     * @return Mappa carattere -> valore checksum
-     */
+    // posizioni dispari: valori sparsi, trascritti dalla tabella ufficiale
     private static Map<Character, Integer> createOddValues() {
         Map<Character, Integer> values = new HashMap<>();
 
@@ -505,45 +449,23 @@ public final class CodiceFiscaleService {
     }
 
     /**
-     * Oggetto risultato utilizzato per rappresentare l'esito di una validazione.
+     * Esito della verifica piu' l'elenco dei messaggi da stampare, cosi' il
+     * menu non deve ricostruire nessuna spiegazione.
      */
     public static final class ValidationResult {
 
-        /**
-         * Indica se il codice fiscale è valido.
-         */
         private final boolean valid;
-
-        /**
-         * Elenco dettagliato dei messaggi di validazione.
-         */
         private final List<String> messages;
 
-        /**
-         * Costruisce un nuovo risultato di validazione.
-         * 
-         * @param valid true se valido
-         * @param messages Messaggi descrittivi della validazione
-         */
         public ValidationResult(boolean valid, List<String> messages) {
             this.valid = valid;
             this.messages = List.copyOf(messages);
         }
 
-        /**
-         * Restituisce l'esito della validazione.
-         * 
-         * @return true se valido
-         */
         public boolean isValid() {
             return valid;
         }
 
-        /**
-         * Restituisce i messaggi dettagliati della validazione.
-         * 
-         * @return Lista dei messaggi
-         */
         public List<String> getMessages() {
             return messages;
         }

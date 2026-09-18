@@ -6,58 +6,30 @@ import java.util.Scanner;
 import java.util.Set;
 
 /**
- * Classe responsabile della gestione del menu principale dell'applicazione.
- * 
- * Coordina tutte le funzionalità del sistema ANAGR@FE:
- * <ul>
- *     <li>Gestione cittadini</li>
- *     <li>Calcolo codice fiscale</li>
- *     <li>Ricerca archivio</li>
- *     <li>Verifica codici fiscali</li>
- *     <li>Esportazione dati</li>
- *     <li>Statistiche archivio</li>
- * </ul>
+ * Menu interattivo e collegamento tra l'utente e i servizi.
+ * Qui dentro non c'e' logica di calcolo: si leggono i dati, si chiamano i
+ * servizi e si stampa il risultato.
  */
 public final class Menu {
 
-    /**
-     * Scanner utilizzato per gli input da console.
-     */
     private final Scanner scanner;
 
-    /**
-     * Utility helper per la gestione della console.
-     */
     private final ConsoleUtils console;
 
-    /**
-     * Servizio gestione comuni italiani.
-     */
     private final ComuneService comuneService;
 
-    /**
-     * Servizio gestione archivio cittadini.
-     */
     private final ArchivioService archivioService;
 
-    /**
-     * Servizio gestione codice fiscale.
-     */
     private final CodiceFiscaleService codiceFiscaleService;
 
-    /**
-     * Servizio esportazione dati.
-     */
     private final ExportService exportService;
 
-    /**
-     * Servizio generazione statistiche.
-     */
     private final StatisticheService statisticheService;
 
     /**
-     * Costruisce il menu principale inizializzando tutti i servizi applicativi.
-     * 
+     * Crea i servizi una volta sola: comuni e archivio leggono i file nel
+     * costruttore, quindi conviene farlo prima dello splash screen.
+     *
      * @param scanner Scanner condiviso per gli input da tastiera
      */
     public Menu(Scanner scanner) {
@@ -71,12 +43,9 @@ public final class Menu {
     }
 
     /**
-     * Avvia il ciclo principale del menu applicativo.
-     * 
-     * Mostra lo splash screen iniziale e gestisce
-     * la navigazione dell'utente fino all'uscita.
-     * 
-     * @param fastSplash true per visualizzare una splash rapida
+     * Ciclo principale: si ripete finche' l'utente non sceglie 0.
+     *
+     * @param fastSplash true per accorciare la schermata iniziale
      */
     public void start(boolean fastSplash) {
 
@@ -123,9 +92,8 @@ public final class Menu {
         } while (choice != 0);
     }
 
-    /**
-     * Visualizza il menu principale dell'applicazione.
-     */
+    // le due righe in basso servono a capire da dove arrivano i dati,
+    // e' comodo quando i comuni non vengono caricati
     private void printMenu() {
 
         console.clearScreen();
@@ -169,9 +137,6 @@ public final class Menu {
         );
     }
 
-    /**
-     * Gestisce la creazione di un nuovo cittadino.
-     */
     private void nuovoCittadino() {
 
         printSection("CREAZIONE NUOVO CITTADINO");
@@ -196,9 +161,8 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Calcola il codice fiscale di un cittadino senza salvarlo in archivio.
-     */
+    // come nuovoCittadino ma senza salvare: passo un set vuoto di codici
+    // esistenti, cosi' non viene applicata l'omocodia
     private void calcolaCodiceFiscale() {
 
         printSection("CALCOLO CODICE FISCALE");
@@ -224,15 +188,6 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Visualizza l'intero archivio cittadini.
-     * 
-     * Permette la scelta tra:
-     * <ul>
-     *     <li>Visualizzazione tabellare</li>
-     *     <li>Visualizzazione a card</li>
-     * </ul>
-     */
     private void archivioCittadini() {
 
         printSection("ARCHIVIO CITTADINI");
@@ -267,14 +222,6 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Ricerca cittadini nell'archivio tramite:
-     * <ul>
-     *     <li>Nome</li>
-     *     <li>Cognome</li>
-     *     <li>Codice fiscale</li>
-     * </ul>
-     */
     private void cercaCittadino() {
 
         printSection("RICERCA CITTADINO");
@@ -304,9 +251,6 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Verifica la validità di un codice fiscale inserito manualmente.
-     */
     private void verificaCodiceFiscale() {
 
         printSection("VERIFICA CODICE FISCALE");
@@ -324,9 +268,8 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Modifica un cittadino già presente nell'archivio.
-     */
+    // il codice fiscale vecchio serve due volte: per trovare il record e per
+    // escluderlo dal controllo delle collisioni
     private void modificaCittadino() {
 
         printSection("MODIFICA CITTADINO");
@@ -386,9 +329,6 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Elimina definitivamente un cittadino dall'archivio.
-     */
     private void eliminaCittadino() {
 
         printSection("ELIMINA CITTADINO");
@@ -438,15 +378,6 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Esporta l'archivio cittadini nei formati supportati.
-     * 
-     * Formati disponibili:
-     * <ul>
-     *     <li>TXT allineato</li>
-     *     <li>CSV</li>
-     * </ul>
-     */
     private void esportaArchivio() {
 
         printSection("ESPORTA ARCHIVIO");
@@ -485,9 +416,6 @@ public final class Menu {
         console.pause();
     }
 
-    /**
-     * Visualizza le statistiche dell'archivio cittadini.
-     */
     private void statisticheArchivio() {
 
         printSection("STATISTICHE ARCHIVIO");
@@ -502,11 +430,15 @@ public final class Menu {
     }
 
     /**
-     * Gestisce l'inserimento completo dei dati di un cittadino.
-     * 
-     * @param current Eventuale cittadino esistente in modifica
-     * @param codiciEsistenti Codici fiscali già presenti
-     * @return Nuovo oggetto cittadino
+     * Unico punto di inserimento dati, usato sia in creazione sia in modifica.
+     * Se current e' presente siamo in modifica e ogni campo lasciato vuoto
+     * mantiene il valore di prima; se e' vuoto tutti i campi sono obbligatori.
+     * Il codice fiscale viene ricalcolato in ogni caso, perche' basta cambiare
+     * una lettera del nome per cambiarlo.
+     *
+     * @param current cittadino da modificare, oppure Optional vuoto
+     * @param codiciEsistenti codici da evitare
+     * @return il cittadino con i dati inseriti
      */
     private Cittadino inputCittadino(
             Optional<Cittadino> current,
@@ -560,10 +492,12 @@ public final class Menu {
     }
 
     /**
-     * Gestisce la selezione o modifica del comune di nascita/residenza.
-     * 
-     * @param current Eventuale cittadino in modifica
-     * @return Comune selezionato
+     * In modifica il comune viene richiesto a parte: se l'utente lo lascia
+     * invariato si riusa il codice catastale che era gia' salvato, senza
+     * rifare la ricerca.
+     *
+     * @param current cittadino in modifica, oppure Optional vuoto
+     * @return il comune scelto
      */
     private Comune inputComune(Optional<Cittadino> current) {
 
@@ -606,11 +540,14 @@ public final class Menu {
     }
 
     /**
-     * Risolve un comune cercandolo nell'archivio o richiedendo inserimento manuale.
-     * 
-     * @param name Nome del comune
-     * @param province Provincia del comune
-     * @return Comune risolto
+     * Tre tentativi in cascata: ricerca esatta, lista di suggerimenti da cui
+     * scegliere, e in ultima istanza inserimento a mano del codice catastale
+     * (serve per i comuni soppressi e per chi e' nato all'estero, che nei
+     * file dei comuni non ci sono).
+     *
+     * @param name nome scritto dall'utente
+     * @param province sigla provincia, eventualmente vuota
+     * @return il comune da usare per il calcolo
      */
     private Comune resolveComune(String name, String province) {
 
@@ -669,6 +606,7 @@ public final class Menu {
 
         String code;
 
+        // formato del codice catastale: una lettera e tre cifre
         do {
 
             code = console
@@ -697,11 +635,6 @@ public final class Menu {
         return new Comune(name, finalProvince, code);
     }
 
-    /**
-     * Visualizza il risultato della validazione di un codice fiscale.
-     * 
-     * @param result Esito della validazione
-     */
     private void printValidation(
             CodiceFiscaleService.ValidationResult result
     ) {
@@ -725,11 +658,7 @@ public final class Menu {
         }
     }
 
-    /**
-     * Visualizza i cittadini in formato tabellare compatto.
-     * 
-     * @param cittadini Lista dei cittadini da visualizzare
-     */
+    // intestazione con lo stesso formato usato da Cittadino.toTableLine()
     private void printTable(List<Cittadino> cittadini) {
 
         System.out.printf(
@@ -750,11 +679,6 @@ public final class Menu {
         );
     }
 
-    /**
-     * Visualizza i cittadini tramite card dettagliate.
-     * 
-     * @param cittadini Lista cittadini da visualizzare
-     */
     private void printCards(List<Cittadino> cittadini) {
 
         for (int i = 0; i < cittadini.size(); i++) {
@@ -769,11 +693,6 @@ public final class Menu {
         }
     }
 
-    /**
-     * Visualizza il titolo di una sezione del menu.
-     * 
-     * @param title Titolo della sezione
-     */
     private void printSection(String title) {
 
         console.clearScreen();

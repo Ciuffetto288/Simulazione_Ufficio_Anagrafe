@@ -8,30 +8,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Servizio per l'esportazione dell'archivio cittadini in file esterni.
- *
- * <p>Supporta il formato testuale tabellare e il formato CSV. Le esportazioni
- * sono pensate per l'utente finale: mostrano nome, cognome, data, sesso, comune,
- * provincia e codice fiscale, ma non il codice catastale usato internamente.</p>
+ * Esporta l'archivio in TXT (colonne allineate) o CSV (per Excel).
+ * In entrambi i casi si mostrano comune e provincia, non il codice catastale:
+ * quello resta un dato interno che serve solo al calcolo.
  */
 public final class ExportService {
 
-    /**
-     * Formattatore temporale per generare un suffisso univoco nei file esportati.
-     */
+    // data e ora nel nome del file, cosi' un export non sovrascrive il precedente
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
-    /**
-     * Costruisce un servizio di esportazione senza stato interno.
-     */
     public ExportService() {
     }
 
     /**
-     * Esporta i cittadini in un file di testo con colonne allineate.
+     * Export leggibile a schermo o da stampare.
      *
-     * @param cittadini lista di oggetti {@link Cittadino} da includere nell'esportazione
-     * @return {@link Path} del file di testo creato nella cartella dati
+     * @param cittadini record da esportare
+     * @return il file creato nella cartella dati
      */
     public Path exportTxt(List<Cittadino> cittadini) {
         Path output = AppPaths.dataFile("export_cittadini_" + STAMP.format(LocalDateTime.now()) + ".txt");
@@ -48,13 +41,10 @@ public final class ExportService {
     }
 
     /**
-     * Esporta i cittadini in un file CSV importabile in fogli di calcolo.
+     * Export da aprire con un foglio di calcolo.
      *
-     * <p>L'intestazione non include il codice catastale, perché chi consulta il
-     * file deve leggere direttamente comune e provincia.</p>
-     *
-     * @param cittadini lista di oggetti {@link Cittadino} da esportare
-     * @return {@link Path} del file CSV creato nella cartella dati
+     * @param cittadini record da esportare
+     * @return il file creato nella cartella dati
      */
     public Path exportCsv(List<Cittadino> cittadini) {
         Path output = AppPaths.dataFile("export_cittadini_" + STAMP.format(LocalDateTime.now()) + ".csv");
@@ -65,13 +55,7 @@ public final class ExportService {
         return output;
     }
 
-    /**
-     * Scrive le righe di esportazione su disco creando la cartella di destinazione se necessario.
-     *
-     * @param output percorso del file di destinazione
-     * @param lines righe di testo da scrivere
-     * @throws IllegalStateException se si verifica un errore IO durante la scrittura
-     */
+    // scrittura vera e propria, in UTF-8 per non perdere gli accenti
     private void write(Path output, List<String> lines) {
         try {
             Files.createDirectories(output.getParent());

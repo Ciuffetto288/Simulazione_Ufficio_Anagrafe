@@ -25,65 +25,49 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * Servizio dedicato alla gestione dell'archivio dei comuni italiani.
- * 
- * Supporta:
- * <ul>
- *     <li>Ricerca per nome</li>
- *     <li>Ricerca per codice catastale</li>
- *     <li>Caricamento dati da file CSV</li>
- *     <li>Caricamento dati da file XLSX</li>
- *     <li>Fallback su database interno predefinito</li>
+ * Archivio dei comuni italiani.
+ *
+ * All'avvio prova a leggere comuni.xlsx, poi comuni.csv, e se non trova
+ * niente di utilizzabile usa un elenco minimo scritto nel codice: il
+ * programma deve partire comunque.
+ *
+ * L'xlsx viene letto a mano, aprendolo come ZIP e leggendone l'XML interno,
+ * per non dover aggiungere librerie esterne al progetto.
+ *
+ * La parte piu' delicata e' la ricerca, perche' l'utente scrive il comune
+ * come gli viene: "Rovigo", "Rovigo (RO)", "Monselice PD", "rovigo".
  * </ul>
  */
 public final class ComuneService {
 
-    /**
-     * Pattern per intercettare input come "Rovigo (RO)".
-     */
+    // "Rovigo (RO)"
     private static final Pattern PROVINCE_IN_PARENTHESES =
             Pattern.compile("^(.*?)[\\s,;-]*\\(([A-Za-z]{2})\\)\\s*$");
 
-    /**
-     * Pattern per intercettare input come "Monselice PD" o "Rovigo - RO".
-     */
+    // "Monselice PD", "Rovigo - RO", "Rovigo, RO"
     private static final Pattern TRAILING_PROVINCE =
             Pattern.compile("^(.*?)[\\s,;-]+([A-Za-z]{2})\\s*$");
 
-    /**
-     * Archivio dei comuni indicizzati per codice catastale.
-     */
+    // doppio indice: mappa per la ricerca diretta per codice, lista per
+    // scorrere tutto quando si cerca per nome
     private final Map<String, Comune> byCode = new LinkedHashMap<>();
-
-    /**
-     * Lista completa dei comuni caricati.
-     */
     private final List<Comune> comuni = new ArrayList<>();
 
-    /**
-     * Descrizione della sorgente dati attualmente utilizzata.
-     */
+    // mostrata nel menu, per sapere da dove arrivano i dati
     private String source = "database interno";
 
-    /**
-     * Costruisce il servizio caricando automaticamente l'archivio comuni.
-     */
+
     public ComuneService() {
         load();
     }
 
     /**
-     * Cerca comuni tramite nome, parte del nome o nome con provincia finale.
+     * Suggerimenti per una ricerca parziale.
+     * L'ordinamento serve a mettere davanti la corrispondenza esatta: cercando
+     * "Rovigo" il primo risultato deve essere Rovigo, non Costa di Rovigo.
      *
-     * <p>La ricerca viene effettuata in forma normalizzata ignorando maiuscole,
-     * accenti e punteggiatura. Se l'utente scrive la sigla della provincia
-     * insieme al comune, ad esempio {@code Rovigo (RO)} oppure {@code Monselice PD},
-     * la sigla viene estratta e usata per filtrare i risultati. I risultati
-     * esatti vengono ordinati prima delle corrispondenze parziali, cosi un
-     * comune come {@code Rovigo} non viene confuso con {@code Costa di Rovigo}.</p>
-     *
-     * @param query testo di ricerca inserito dall'utente
-     * @return lista ordinata dei comuni trovati, limitata ai primi 20 risultati
+     * @param query testo scritto dall'utente
+     * @return al massimo 20 comuni, dal piu' pertinente
      */
     public List<Comune> searchByName(String query) {
         ComuneQuery parsed = parseComuneQuery(query, "");
@@ -112,17 +96,13 @@ public final class ComuneService {
     }
 
     /**
-     * Cerca un comune tramite nome e provincia con confronto esatto ma flessibile.
+     * Ricerca esatta sul nome (accenti e maiuscole a parte). Il campo provincia
+     * puo' restare vuoto se la sigla e' gia' scritta dentro il nome.
+     * Le corrispondenze parziali le gestisce {@link #searchByName(String)}.
      *
-     * <p>Accetta sia i campi separati, ad esempio nome {@code Rovigo} e provincia
-     * {@code RO}, sia un unico testo naturale come {@code Rovigo (RO)},
-     * {@code Rovigo RO} o {@code Monselice PD}. Il confronto sul nome ignora
-     * accenti e punteggiatura, ma resta esatto: le corrispondenze parziali vengono
-     * lasciate ai suggerimenti di {@link #searchByName(String)}.</p>
-     *
-     * @param nome nome del comune o nome con provincia finale
-     * @param provincia sigla della provincia, opzionale se gia presente nel nome
-     * @return {@link Optional} contenente il comune trovato, oppure vuoto
+     * @param nome nome del comune, anche con provincia in coda
+     * @param provincia sigla della provincia, se inserita a parte
+     * @return il comune, oppure Optional vuoto
      */
     public Optional<Comune> findByNameAndProvince(String nome, String provincia) {
         ComuneQuery parsed = parseComuneQuery(nome, provincia);
@@ -134,21 +114,19 @@ public final class ComuneService {
                 .findFirst();
     }
 
-    /**
-     * Rappresenta una query comune gia separata in nome e provincia.
-     *
-     * @param nome nome del comune ripulito dalla provincia finale
-     * @param provincia sigla provincia normalizzata in maiuscolo
-     */
+    // nome e provincia separati, come risultato del parsing dell'input
+
     private record ComuneQuery(String nome, String provincia) {
     }
 
+
     /**
-     * Separa nome e provincia anche quando l'utente li inserisce nello stesso campo.
+     * Estrae la sigla dal nome quando c'e'. La provincia scritta nel campo
+     * dedicato ha la precedenza su quella dentro il nome.
      *
-     * @param nome testo del comune, eventualmente comprensivo di provincia
-     * @param provincia provincia inserita nel campo dedicato
-     * @return query normalizzata con nome e provincia distinti
+     * @param nome testo del comune, magari con la sigla in coda
+     * @param provincia contenuto del campo provincia
+     * @return nome e provincia separati
      */
     private static ComuneQuery parseComuneQuery(String nome, String provincia) {
         String cleanName = nome == null ? "" : nome.trim();
@@ -176,24 +154,13 @@ public final class ComuneService {
         return new ComuneQuery(cleanName, finalProvince);
     }
 
-    /**
-     * Normalizza la sigla provincia eliminando spazi e forzando il maiuscolo.
-     *
-     * @param provincia valore da normalizzare
-     * @return sigla provincia normalizzata, oppure stringa vuota
-     */
     private static String normalizeProvince(String provincia) {
         return provincia == null
                 ? ""
                 : provincia.trim().toUpperCase(Locale.ITALIAN);
     }
 
-    /**
-     * Normalizza un nome comune per il confronto testuale.
-     *
-     * @param value nome originale
-     * @return nome senza accenti, punteggiatura superflua e spazi multipli
-     */
+    // "Sant'Angelo  di Piove" diventa "SANT ANGELO DI PIOVE"
     private static String normalizeComuneName(String value) {
         return StringUtils.normalizeSearch(value)
                 .replaceAll("[^A-Z0-9]+", " ")
@@ -201,23 +168,11 @@ public final class ComuneService {
                 .replaceAll("\\s+", " ");
     }
 
-    /**
-     * Crea una versione compatta del nome comune senza spazi.
-     *
-     * @param value nome originale
-     * @return nome normalizzato e compattato
-     */
+    // versione senza spazi, per far funzionare anche "santangelo"
     private static String compactComuneName(String value) {
         return normalizeComuneName(value).replace(" ", "");
     }
 
-    /**
-     * Verifica se due nomi di comune coincidono dopo la normalizzazione.
-     *
-     * @param left primo nome da confrontare
-     * @param right secondo nome da confrontare
-     * @return {@code true} se i nomi rappresentano lo stesso comune
-     */
     private static boolean sameComuneName(String left, String right) {
         String normalizedLeft = normalizeComuneName(left);
         String normalizedRight = normalizeComuneName(right);
@@ -226,14 +181,6 @@ public final class ComuneService {
                 || compactComuneName(left).equals(compactComuneName(right));
     }
 
-    /**
-     * Stabilisce se un comune soddisfa una ricerca testuale.
-     *
-     * @param comune comune da verificare
-     * @param normalized query normalizzata con spazi
-     * @param compact query normalizzata senza spazi
-     * @return {@code true} se il nome del comune contiene la query
-     */
     private static boolean matchesComuneName(
             Comune comune,
             String normalized,
@@ -246,14 +193,9 @@ public final class ComuneService {
                 || (!compact.isBlank() && compactComune.contains(compact));
     }
 
-    /**
-     * Calcola un punteggio di pertinenza per ordinare i risultati della ricerca.
-     *
-     * @param comune comune candidato
-     * @param normalized query normalizzata con spazi
-     * @param compact query normalizzata senza spazi
-     * @return punteggio crescente: valori piu bassi indicano risultati migliori
-     */
+    // punteggio di pertinenza, piu' basso = risultato migliore:
+    // 0 nome identico, 1 identico senza spazi, 2 inizia con la query,
+    // 3 inizia con la query senza spazi, 4 la contiene da qualche parte
     private static int comuneMatchScore(
             Comune comune,
             String normalized,
@@ -282,10 +224,8 @@ public final class ComuneService {
     }
 
     /**
-     * Cerca un comune tramite codice catastale.
-     * 
-     * @param code Codice catastale ministeriale
-     * @return Optional contenente il comune trovato
+     * @param code codice catastale
+     * @return il comune, oppure Optional vuoto
      */
     public Optional<Comune> findByCode(String code) {
         if (code == null) {
@@ -297,44 +237,20 @@ public final class ComuneService {
         );
     }
 
-    /**
-     * Verifica se un codice catastale esiste nell'archivio.
-     * 
-     * @param code Codice catastale da verificare
-     * @return true se presente
-     */
     public boolean existsCode(String code) {
         return findByCode(code).isPresent();
     }
 
-    /**
-     * Restituisce il numero totale dei comuni caricati.
-     * 
-     * @return Numero di comuni disponibili
-     */
     public int size() {
         return comuni.size();
     }
 
-    /**
-     * Restituisce la sorgente dati utilizzata per il caricamento.
-     * 
-     * @return Percorso o descrizione della sorgente
-     */
     public String getSource() {
         return source;
     }
 
-    /**
-     * Carica l'archivio comuni da sorgenti esterne o dal database interno.
-     * 
-     * Ordine di caricamento:
-     * <ol>
-     *     <li>File XLSX</li>
-     *     <li>File CSV</li>
-     *     <li>Database interno embedded</li>
-     * </ol>
-     */
+    // xlsx, poi csv, poi elenco interno. Un file presente ma illeggibile
+    // non deve fermare l'avvio, quindi l'errore viene solo segnalato
     private void load() {
         Path xlsx = AppPaths.dataFile("comuni.xlsx");
         Path csv = AppPaths.dataFile("comuni.csv");
@@ -369,11 +285,6 @@ public final class ComuneService {
         replaceData(defaultComuni());
     }
 
-    /**
-     * Sostituisce completamente l'archivio interno dei comuni.
-     * 
-     * @param loaded Lista dei comuni caricati
-     */
     private void replaceData(List<Comune> loaded) {
         byCode.clear();
         comuni.clear();
@@ -387,13 +298,6 @@ public final class ComuneService {
         comuni.addAll(byCode.values());
     }
 
-    /**
-     * Carica l'archivio comuni da un file CSV.
-     * 
-     * @param path Percorso del file CSV
-     * @return Lista dei comuni caricati
-     * @throws IOException In caso di errore di lettura
-     */
     private static List<Comune> loadCsv(Path path) throws IOException {
         List<Comune> result = new ArrayList<>();
 
@@ -475,13 +379,8 @@ public final class ComuneService {
         return result;
     }
 
-    /**
-     * Carica l'archivio comuni da un file XLSX.
-     * 
-     * @param path Percorso del file Excel
-     * @return Lista dei comuni caricati
-     * @throws Exception In caso di errore di parsing
-     */
+    // un xlsx e' uno zip: dentro, il primo foglio sta in xl/worksheets/sheet1.xml
+    // e i testi delle celle sono in una tabella a parte (shared strings)
     private static List<Comune> loadXlsx(Path path) throws Exception {
         try (ZipFile zip = new ZipFile(path.toFile())) {
 
@@ -511,12 +410,8 @@ public final class ComuneService {
         }
     }
 
-    /**
-     * Converte le righe lette dal file XLSX in oggetti Comune.
-     * 
-     * @param rows Righe estratte dal foglio Excel
-     * @return Lista dei comuni generati
-     */
+    // le colonne non sono sempre nello stesso ordine, quindi si cerca prima
+    // la riga di intestazione e da quella si ricavano gli indici
     private static List<Comune> comuniFromRows(List<Map<Integer, String>> rows) {
 
         int headerRow = -1;
@@ -598,13 +493,8 @@ public final class ComuneService {
         return result;
     }
 
-    /**
-     * Legge una singola riga XML del file XLSX.
-     * 
-     * @param row Nodo XML della riga
-     * @param sharedStrings Tabelle shared strings del workbook
-     * @return Mappa colonna -> valore
-     */
+    // le celle vuote non compaiono nell'XML, per questo serve una mappa
+    // indice->valore invece di una semplice lista
     private static Map<Integer, String> readRow(
             Element row,
             List<String> sharedStrings
@@ -656,13 +546,8 @@ public final class ComuneService {
         return values;
     }
 
-    /**
-     * Legge la tabella shared strings di un file XLSX.
-     * 
-     * @param zip Archivio ZIP del file Excel
-     * @return Lista delle stringhe condivise
-     * @throws Exception In caso di errore XML
-     */
+    // Excel non ripete due volte lo stesso testo: lo salva qui una volta sola
+    // e nelle celle mette l'indice
     private static List<String> readSharedStrings(ZipFile zip) throws Exception {
 
         ZipEntry entry = zip.getEntry("xl/sharedStrings.xml");
@@ -695,15 +580,8 @@ public final class ComuneService {
         return values;
     }
 
-    /**
-     * Effettua il parsing sicuro di un documento XML.
-     * 
-     * Disabilita le entità esterne per prevenire vulnerabilità XXE.
-     * 
-     * @param inputStream Stream XML da leggere
-     * @return Documento XML parsato
-     * @throws Exception In caso di errore di parsing
-     */
+    // entita' esterne disabilitate: un xlsx e' un file che arriva da fuori,
+    // meglio non lasciargli caricare risorse (XXE)
     private static Document parseXml(InputStream inputStream) throws Exception {
 
         DocumentBuilderFactory factory =
@@ -719,13 +597,6 @@ public final class ComuneService {
         return factory.newDocumentBuilder().parse(inputStream);
     }
 
-    /**
-     * Estrae il testo del primo nodo figlio con il tag specificato.
-     * 
-     * @param parent Nodo padre
-     * @param tag Nome del tag figlio
-     * @return Contenuto testuale del nodo
-     */
     private static String childText(Element parent, String tag) {
 
         NodeList nodes = parent.getElementsByTagName(tag);
@@ -740,15 +611,8 @@ public final class ComuneService {
     }
 
     /**
-     * Converte il riferimento Excel della colonna nel relativo indice numerico.
-     * 
-     * Esempi:
-     * <ul>
-     *     <li>A -> 0</li>
-     *     <li>B -> 1</li>
-     *     <li>AA -> 26</li>
-     * </ul>
-     * 
+     * Dal riferimento Excel all'indice: A vale 0, B vale 1, AA vale 26.
+     *
      * @param cellRef Riferimento della cella Excel
      * @return Indice della colonna
      */
@@ -771,12 +635,6 @@ public final class ComuneService {
         return Math.max(0, index - 1);
     }
 
-    /**
-     * Verifica se una riga CSV/XLSX sembra rappresentare l'intestazione.
-     * 
-     * @param cells Celle della riga
-     * @return true se identificata come header
-     */
     private static boolean looksLikeHeader(List<String> cells) {
 
         String joined =
@@ -787,13 +645,6 @@ public final class ComuneService {
                 || joined.contains("CATASTALE");
     }
 
-    /**
-     * Cerca l'indice di una colonna header tramite parole chiave.
-     * 
-     * @param header Lista intestazioni
-     * @param keys Chiavi di ricerca
-     * @return Indice della colonna trovata
-     */
     private static int findHeaderIndex(List<String> header, String... keys) {
 
         for (int i = 0; i < header.size(); i++) {
@@ -813,14 +664,8 @@ public final class ComuneService {
     }
 
     /**
-     * Verifica la validità formale di un codice catastale.
-     * 
-     * Formato previsto:
-     * <ul>
-     *     <li>1 lettera</li>
-     *     <li>3 cifre</li>
-     * </ul>
-     * 
+     * Un codice catastale e' una lettera seguita da tre cifre (es. H501).
+     *
      * @param code Codice catastale da verificare
      * @return true se valido
      */
@@ -830,14 +675,8 @@ public final class ComuneService {
                 .matches("[A-Z][0-9]{3}");
     }
 
-    /**
-     * Restituisce un archivio interno minimo di comuni italiani.
-     * 
-     * Utilizzato come fallback nel caso in cui i file esterni
-     * non siano disponibili o risultino corrotti.
-     * 
-     * @return Lista predefinita di comuni
-     */
+    // elenco di riserva: pochi comuni, ma abbastanza per provare il programma
+    // anche senza i file dei dati
     private static List<Comune> defaultComuni() {
 
         String csv = """

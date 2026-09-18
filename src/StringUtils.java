@@ -3,22 +3,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 /**
- * Classe Utility per la manipolazione, la normalizzazione e il parsing di stringhe di testo.
- * Fornisce strumenti specifici per la gestione dei dati anagrafici e la codifica in formato CSV.
+ * Funzioni di appoggio sulle stringhe: pulizia di nomi e cognomi,
+ * normalizzazione per le ricerche e gestione del CSV.
  */
 public final class StringUtils {
-        /**
-     * Costruttore privato vuoto per impedire l'istanziazione della classe.
-     * Essendo una classe di sole utility con metodi statici, evita l'uso non necessario di 'new StringUtils()'.
-     */
     private StringUtils() {
     }
     /**
-     * Pulisce un nome o cognome rimuovendo accenti, spazi superflui e caratteri non alfabetici.
-     * Converte tutto in maiuscolo, lasciando esclusivamente le lettere da A a Z (utile per il calcolo del codice fiscale).
-     * 
-     * @param value La stringa del nome o del cognome da ripulire
-     * @return La stringa normalizzata contenente solo lettere maiuscole non accentuate, o stringa vuota se null
+     * Riduce un nome o cognome alle sole lettere A-Z maiuscole.
+     * Serve al codice fiscale, che non ammette accenti, apostrofi o spazi
+     * (quindi "D'Angelo" diventa DANGELO).
+     *
+     * @param value nome o cognome da ripulire
+     * @return solo lettere maiuscole, stringa vuota se null
      */
     public static String cleanName(String value) {
         if (value == null) {
@@ -30,11 +27,11 @@ public final class StringUtils {
         return normalized.replaceAll("[^A-Z]", "");
     }
 /**
-     * Normalizza una stringa per ottimizzare le operazioni di ricerca testuale.
-     * Rimuove i segni diacritici (accenti) e trasforma l'intero testo in lettere maiuscole.
-     * 
-     * @param value La stringa da preparare per la ricerca
-     * @return La stringa normalizzata in maiuscolo e senza accenti, o stringa vuota se null
+     * Versione piu' morbida di cleanName: toglie accenti e mette in maiuscolo
+     * ma lascia spazi e punteggiatura, cosi' "Forli" trova "Forli'".
+     *
+     * @param value testo da normalizzare
+     * @return testo senza accenti in maiuscolo
      */
     public static String normalizeSearch(String value) {
         if (value == null) {
@@ -45,11 +42,11 @@ public final class StringUtils {
                 .toUpperCase(Locale.ITALIAN);
     }
  /**
-     * Capitalizza ogni singola parola presente all'interno di una stringa di testo.
-     * Converte la prima lettera di ciascuna parola in maiuscolo e le successive in minuscolo.
-     * 
-     * @param value La stringa di testo da formattare
-     * @return La stringa con le iniziali di ogni parola maiuscole, o stringa vuota se null/blank
+     * Mette l'iniziale maiuscola a ogni parola (per come vengono mostrati
+     * nome, cognome e comune a schermo).
+     *
+     * @param value testo da formattare
+     * @return testo con le iniziali maiuscole
      */
     public static String capitalizeWords(String value) {
         if (value == null || value.isBlank()) {
@@ -68,11 +65,12 @@ public final class StringUtils {
         return result.toString();
     }
  /**
-     * Applica il sistema di escaping standard per inserire in sicurezza una stringa in un file CSV.
-     * Raddoppia le virgolette interne e racchiude il testo tra virgolette se contiene caratteri speciali.
-     * 
-     * @param value La stringa di testo da inserire nella cella del CSV
-     * @return La stringa formattata e protetta contro la rottura del layout CSV
+     * Prepara un valore per il CSV: raddoppia le virgolette e mette la cella
+     * tra virgolette se contiene separatori o newline, altrimenti la riga
+     * verrebbe letta con le colonne sbagliate.
+     *
+     * @param value valore da scrivere
+     * @return valore pronto per il file
      */
     public static String csvEscape(String value) {
         String safe = value == null ? "" : value;
@@ -81,12 +79,12 @@ public final class StringUtils {
         return needsQuotes ? "\"" + safe + "\"" : safe;
     }
     /**
-     * Esegue il parsing avanzato di una singola riga CSV rispettando la presenza di celle racchiuse tra virgolette.
-     * Gestisce correttamente i separatori interni e le doppie virgolette di escape.
-     * 
-     * @param line      La riga di testo CSV completa da dividere
-     * @param separator Il carattere utilizzato come separatore di colonna (es. ';')
-     * @return Una lista di stringhe contenente i valori estratti dalle singole celle
+     * Divide una riga CSV in celle. Non si puo' usare String.split perche'
+     * il separatore dentro le virgolette non va considerato.
+     *
+     * @param line      riga da dividere
+     * @param separator separatore di colonna (qui ';')
+     * @return le celle trovate
      */
     public static List<String> splitCsvLine(String line, char separator) {
         List<String> cells = new ArrayList<>();
@@ -96,6 +94,7 @@ public final class StringUtils {
         for (int i = 0; i < line.length(); i++) {
             char ch = line.charAt(i);
             if (ch == '"') {
+                // due virgolette di fila dentro una cella = una virgoletta vera
                 if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
                     current.append('"');
                     i++;
@@ -109,16 +108,17 @@ public final class StringUtils {
                 current.append(ch);
             }
         }
+        // ultima cella: dopo di lei non c'e' separatore
         cells.add(current.toString());
         return cells;
     }
 /**
-     * Allinea a sinistra il testo all'interno di uno spazio di larghezza fissa riempiendolo con spazi vuoti.
-     * Se la stringa supera la larghezza massima, viene troncata inserendo un punto "." finale.
-     * 
-     * @param value L'espressione testuale da formattare
-     * @param width La larghezza fissa totale della colonna desiderata
-     * @return La stringa formattata a spaziatura fissa o troncata nei limiti
+     * Allinea a sinistra in una colonna di larghezza fissa, troncando con un
+     * punto finale se il testo e' troppo lungo. Usato nelle tabelle a schermo.
+     *
+     * @param value testo da incolonnare
+     * @param width larghezza della colonna
+     * @return testo della lunghezza richiesta
      */
     public static String left(String value, int width) {
         String safe = value == null ? "" : value;

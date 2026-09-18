@@ -10,28 +10,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Classe di Servizio per la gestione, la persistenza e la manipolazione dell'archivio dei cittadini.
- * Gestisce la lettura e la scrittura dei dati su un file CSV dedicato.
+ * Archivio dei cittadini.
+ * I record stanno in memoria in una lista e vengono riscritti interamente su
+ * cittadini.csv dopo ogni modifica: l'archivio e' piccolo, quindi conviene
+ * tenerlo semplice invece di aggiornare il file riga per riga.
  */
 public final class ArchivioService {
-    /**
-     * Intestazione standard del file CSV dell'archivio.
-     */
+    // prima riga del file, riscritta a ogni salvataggio
     private static final String HEADER = "nome;cognome;dataNascita;sesso;comune;provincia;codiceComune;codiceFiscale";
     
-    /**
-     * Il percorso del file CSV in cui vengono salvati i dati.
-     */
     private final Path path;
-    
-    /**
-     * Lista in memoria contenente tutti i cittadini caricati dall'archivio.
-     */
     private final List<Cittadino> cittadini = new ArrayList<>();
 
     /**
-     * Inizializza un nuovo servizio di archivio.
-     * Imposta il percorso del file CSV tramite {@link AppPaths} e carica i dati esistenti in memoria.
+     * Carica subito l'archivio esistente, cosi' il menu parte con i dati pronti.
      */
     public ArchivioService() {
         this.path = AppPaths.dataFile("cittadini.csv");
@@ -39,10 +31,7 @@ public final class ArchivioService {
     }
 
     /**
-     * Restituisce la lista di tutti i cittadini presenti in archivio.
-     * La lista viene ordinata per cognome, nome e infine codice fiscale.
-     * 
-     * @return Una lista ordinata di oggetti {@link Cittadino}
+     * @return tutti i cittadini, ordinati per cognome, nome e codice fiscale
      */
     public List<Cittadino> all() {
         return cittadini.stream()
@@ -53,9 +42,7 @@ public final class ArchivioService {
     }
 
     /**
-     * Aggiunge un nuovo cittadino all'archivio in memoria e salva le modifiche su file.
-     * 
-     * @param cittadino Il cittadino da aggiungere
+     * @param cittadino record da inserire (il file viene aggiornato subito)
      */
     public void add(Cittadino cittadino) {
         cittadini.add(cittadino);
@@ -63,12 +50,12 @@ public final class ArchivioService {
     }
 
     /**
-     * Aggiorna i dati di un cittadino esistente identificato dal suo vecchio codice fiscale.
-     * Salva automaticamente le modifiche su file se l'operazione va a buon fine.
-     * 
-     * @param oldCodiceFiscale Il codice fiscale del cittadino da modificare
-     * @param updated          I nuovi dati aggiornati del cittadino
-     * @throws IllegalArgumentException Se il cittadino con il codice fiscale specificato non viene trovato
+     * Sostituisce un record. Serve il vecchio codice fiscale perche' dopo una
+     * modifica dei dati anagrafici quello nuovo e' diverso.
+     *
+     * @param oldCodiceFiscale codice fiscale attuale del record
+     * @param updated          record con i dati nuovi
+     * @throws IllegalArgumentException se quel codice fiscale non e' in archivio
      */
     public void update(String oldCodiceFiscale, Cittadino updated) {
         for (int i = 0; i < cittadini.size(); i++) {
@@ -82,10 +69,8 @@ public final class ArchivioService {
     }
 
     /**
-     * Rimuove un cittadino dall'archivio in base al codice fiscale e aggiorna il file.
-     * 
-     * @param codiceFiscale Il codice fiscale del cittadino da eliminare
-     * @return true se il cittadino è stato rimosso con successo, false altrimenti
+     * @param codiceFiscale codice fiscale del record da eliminare
+     * @return true se c'era qualcosa da eliminare
      */
     public boolean delete(String codiceFiscale) {
         boolean removed = cittadini.removeIf(c -> c.getCodiceFiscale().equalsIgnoreCase(codiceFiscale));
@@ -96,10 +81,10 @@ public final class ArchivioService {
     }
 
     /**
-     * Cerca un cittadino all'interno dell'archivio tramite il codice fiscale.
-     * 
-     * @param codiceFiscale Il codice fiscale da cercare
-     * @return Un {@link Optional} contenente il cittadino trovato, oppure vuoto se non presente o se il parametro è null
+     * Ricerca esatta per codice fiscale, ignorando maiuscole e spazi ai bordi.
+     *
+     * @param codiceFiscale codice da cercare
+     * @return il cittadino, oppure Optional vuoto
      */
     public Optional<Cittadino> findByCodiceFiscale(String codiceFiscale) {
         if (codiceFiscale == null) {
@@ -111,11 +96,10 @@ public final class ArchivioService {
     }
 
     /**
-     * Esegue una ricerca testuale flessibile all'interno dell'archivio dei cittadini.
-     * Rispetta i criteri di corrispondenza interni della classe Cittadino e ordina per cognome e nome.
-     * 
-     * @param query Il testo o criterio di ricerca
-     * @return Una lista di cittadini che corrispondono alla ricerca
+     * Ricerca libera (vedi {@link Cittadino#matches(String)}).
+     *
+     * @param query testo cercato
+     * @return i risultati ordinati per cognome e nome
      */
     public List<Cittadino> search(String query) {
         return cittadini.stream()
@@ -125,9 +109,7 @@ public final class ArchivioService {
     }
 
     /**
-     * Estrae tutti i codici fiscali univoci attualmente registrati nell'archivio.
-     * 
-     * @return Un insieme (Set) di stringhe contenente i codici fiscali
+     * @return i codici fiscali gia' usati, per controllare le collisioni
      */
     public Set<String> fiscalCodes() {
         return cittadini.stream()
@@ -136,11 +118,11 @@ public final class ArchivioService {
     }
 
     /**
-     * Estrae tutti i codici fiscali univoci dall'archivio, escludendo quello specificato.
-     * Utile per i controlli di unicità in fase di modifica dati.
-     * 
-     * @param codiceFiscale Il codice fiscale da escludere dall'insieme finale
-     * @return Un insieme (Set) di stringhe contenente i codici fiscali rimanenti
+     * Come fiscalCodes() ma senza un codice preciso: in modifica il record che
+     * si sta modificando non deve contare come collisione con se stesso.
+     *
+     * @param codiceFiscale codice da escludere
+     * @return gli altri codici fiscali in archivio
      */
     public Set<String> fiscalCodesExcept(String codiceFiscale) {
         return cittadini.stream()
@@ -149,21 +131,11 @@ public final class ArchivioService {
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * Restituisce il percorso del file CSV associato a questo archivio.
-     * 
-     * @return Il Path del file dei dati
-     */
     public Path getPath() {
         return path;
     }
 
-    /**
-     * Sincronizza la lista in memoria leggendo tutte le righe dal file CSV.
-     * Se il file non esiste, si occupa di generarlo vuoto con la sola intestazione.
-     * 
-     * @throws IllegalStateException Se si verifica un errore IO durante la lettura del file
-     */
+    // rilegge il file dall'inizio; al primo avvio lo crea con la sola intestazione
     private void load() {
         cittadini.clear();
         if (!Files.exists(path)) {
@@ -173,6 +145,7 @@ public final class ArchivioService {
         try {
             List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
             for (String line : lines) {
+                // salto righe vuote e intestazione
                 if (line.isBlank() || line.toLowerCase().startsWith("nome;")) {
                     continue;
                 }
@@ -183,12 +156,7 @@ public final class ArchivioService {
         }
     }
 
-    /**
-     * Scrive i dati della lista in memoria direttamente all'interno del file CSV.
-     * Applica un ordinamento automatico per cognome e nome prima del salvataggio.
-     * 
-     * @throws IllegalStateException Se si verifica un errore IO durante la scrittura o la creazione delle directory
-     */
+    // riscrive tutto il file, ordinato, cosi' resta leggibile anche a mano
     private void save() {
         List<String> lines = new ArrayList<>();
         lines.add(HEADER);
