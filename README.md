@@ -78,3 +78,6 @@ L'archivio interno conserva il codice catastale perché serve al calcolo del cod
 - `data/comuni.csv`: archivio comuni alternativo o di fallback.
 - `data/cittadini.csv`: archivio persistente dei cittadini creati.
 
+
+## Contributors
+  1) : Sviluppo - Ramo App-GUI -> [Clicca qui per esplorare il ramo](https://github.com/Ciuffetto288/Simulazione_Ufficio_Anagrafe/tree/App-GUI)
