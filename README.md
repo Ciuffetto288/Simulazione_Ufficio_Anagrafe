@@ -80,7 +80,5 @@ L'archivio interno conserva il codice catastale perché serve al calcolo del cod
 
 
 ## Contributors
-  1) : Sviluppo - Ramo App-GUI -> [Clicca qui per esplorare il ramo](https://github.com/Ciuffetto288/Simulazione_Ufficio_Anagrafe/tree/App-GUI) -  **@terzastella**
+  1) **@terzastella** : Sviluppo - Ramo App-GUI -> [Clicca qui per esplorare il ramo](https://github.com/Ciuffetto288/Simulazione_Ufficio_Anagrafe/tree/App-GUI) -  
       
-        
-  
